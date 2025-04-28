@@ -13,8 +13,8 @@ fn draw_square(x: c_int, y: c_int, side: c_int, color: ray.Color) void {
 }
 
 const CELL_SIDE = 50;
-const CELL_GAP = 7;
-const CELL_BORDER_WIDTH = 5;
+const CELL_GAP = 3;
+const CELL_BORDER_WIDTH = 2;
 
 fn draw_cell(on: bool, x: c_int, y: c_int) void {
     draw_square(x, y, 50, ray.VIOLET);
@@ -36,12 +36,30 @@ fn draw_cell_row(cell_states: []bool, x: c_int, y: c_int) void {
     }
 }
 
+fn cells_draw_width(n_cells: c_int) c_int {
+    return n_cells * CELL_SIDE + (n_cells - 1) * CELL_GAP;
+}
+
+fn top_left_from_center(
+    cx: c_int,
+    cy: c_int,
+    width: c_int,
+    height: c_int,
+) struct { c_int, c_int } {
+    return .{
+        cx - @divTrunc(width, 2),
+        cy - @divTrunc(height, 2),
+    };
+}
+
 pub fn main() !void {
     // var gpa = std.heap.GeneralPurposeAllocator.init(.{}){};
     // const alloc = gpa.alloc();
+    const win_width = 1080;
+    const win_height = 720;
 
     const title = "oneten";
-    ray.InitWindow(1080, 720, title);
+    ray.InitWindow(win_width, win_height, title);
     defer ray.CloseWindow();
     ray.SetTargetFPS(60);
 
@@ -52,17 +70,20 @@ pub fn main() !void {
         toggle = !toggle;
     }
 
+    const cx: c_int = win_width / 2;
+    const cy: c_int = win_height / 2;
+
+    const cells_x: c_int, const cells_y: c_int = top_left_from_center(
+        cx,
+        cy,
+        cells_draw_width(10),
+        cells_draw_width(1),
+    );
+
     while (!ray.WindowShouldClose()) {
         ray.BeginDrawing();
         ray.ClearBackground(ray.RAYWHITE);
-        // draw_cell(true, 200, 200);
-        // draw_cell(false, 200 + CELL_SIDE + CELL_GAP, 200);
-        draw_cell_row(cells[0..], 150, 300);
+        draw_cell_row(cells[0..], cells_x, cells_y);
         ray.EndDrawing();
-
-        if (ray.IsKeyPressed(ray.KEY_ESCAPE)) {
-            std.debug.print("esc pressed", .{});
-            break;
-        }
     }
 }
