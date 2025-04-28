@@ -125,11 +125,11 @@ const OneTenGrid = struct {
         };
     }
 
-    fn deinit(self: OneTenGrid, alloc: Allocator) void {
+    fn deinit(self: *OneTenGrid, alloc: Allocator) void {
         for (self.rows.items) |row| {
             alloc.free(row);
         }
-        self.rows.deinit();
+        self.rows.deinit(alloc);
     }
 
     fn append_step(self: *OneTenGrid, alloc: Allocator) !void {
@@ -217,6 +217,7 @@ pub fn oneten() !void {
     fill(false, cells0);
     cells0[cells0.len - 1] = true;
     var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
+    defer grid.deinit(alloc);
 
     //////////////////////////////////////////////////
 
