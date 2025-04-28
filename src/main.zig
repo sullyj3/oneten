@@ -108,11 +108,13 @@ const OneTenGrid = struct {
     alloc: Allocator,
 
     // takes ownership of initial_state, which must have been allocated from `alloc`.
-    fn init(alloc: Allocator, initial_state: []bool) !OneTenGrid {
+    fn init(alloc: Allocator, n_cells: usize) !OneTenGrid {
         var rows: ArrayListUM([]bool) = try ArrayListUM([]bool).initCapacity(
             alloc,
             32,
         );
+        const initial_state = try alloc.alloc(bool, n_cells);
+        @memset(initial_state, false);
         rows.appendAssumeCapacity(initial_state);
         return .{
             .rows = rows,
@@ -226,11 +228,11 @@ pub fn oneten() !void {
     //////////////////////////////////////////////////
 
     // construct initial row
-    const cells0: []bool = try alloc.alloc(bool, 18);
-    @memset(cells0, false);
-    cells0[cells0.len - 1] = true;
-    var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
+    var grid: OneTenGrid = try OneTenGrid.init(alloc, 25);
     defer grid.deinit();
+
+    const row0 = grid.rows.getLast();
+    row0[row0.len - 1] = true;
 
     //////////////////////////////////////////////////
 
