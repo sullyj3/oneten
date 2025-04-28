@@ -4,6 +4,8 @@ const ray = @cImport({
     @cInclude("raymath.h");
 });
 
+const Allocator = std.mem.Allocator;
+
 const sleep = std.time.sleep;
 const ns_per_s = std.time.ns_per_s;
 
@@ -74,8 +76,6 @@ fn rule_110(triplet: [3]bool) bool {
     };
 }
 
-const Allocator = std.mem.Allocator;
-
 fn sim_step_110(alloc: Allocator, in_row: []bool) ![]bool {
     const out_row: []bool = try alloc.alloc(bool, in_row.len);
 
@@ -87,16 +87,14 @@ fn sim_step_110(alloc: Allocator, in_row: []bool) ![]bool {
     // we special case the start and end to avoid indexing out of bounds or
     // having to check if we're at the end each iteration
     // cells outside our array are implicitly false
-    var i: usize = 0;
-    out_row[i] = rule_110([3]bool{ false, in_row[0], in_row[1] });
+    out_row[0] = rule_110([3]bool{ false, in_row[0], in_row[1] });
 
-    i += 1;
-    var it = std.mem.window(bool, in_row, 3, 1);
-    while (it.next()) |trip| : (i += 1) {
-        out_row[i] = rule_110(trip[0..3].*);
+    var windows = std.mem.window(bool, in_row, 3, 1);
+    for (out_row[1 .. out_row.len - 1]) |*out_ptr| {
+        out_ptr.* = rule_110(windows.next().?[0..3].*);
     }
 
-    out_row[i] = rule_110([3]bool{
+    out_row[out_row.len - 1] = rule_110([3]bool{
         in_row[in_row.len - 2],
         in_row[in_row.len - 1],
         false,
