@@ -16,14 +16,17 @@ const CELL_SIDE = 30;
 const CELL_GAP = 3;
 const CELL_BORDER_WIDTH = 2;
 
+const BG_COLOR = ray.SKYBLUE;
+const FG_COLOR = ray.DARKBLUE;
+
 fn draw_cell(on: bool, x: c_int, y: c_int) void {
-    draw_square(x, y, CELL_SIDE, ray.VIOLET);
+    draw_square(x, y, CELL_SIDE, FG_COLOR);
     if (!on) {
         draw_square(
             x + CELL_BORDER_WIDTH,
             y + CELL_BORDER_WIDTH,
             CELL_SIDE - 2 * CELL_BORDER_WIDTH,
-            ray.RAYWHITE,
+            BG_COLOR,
         );
     }
 }
@@ -189,8 +192,8 @@ const OneTenGrid = struct {
         const fg_x = bg_x + GRID_BORDER_THICKNESS;
         const fg_y = bg_y + GRID_BORDER_THICKNESS;
 
-        ray.DrawRectangle(bg_x, bg_y, bg_width, bg_height, ray.VIOLET);
-        ray.DrawRectangle(fg_x, fg_y, fg_width, fg_height, ray.RAYWHITE);
+        ray.DrawRectangle(bg_x, bg_y, bg_width, bg_height, FG_COLOR);
+        ray.DrawRectangle(fg_x, fg_y, fg_width, fg_height, BG_COLOR);
     }
 };
 
@@ -227,7 +230,7 @@ pub fn oneten() !void {
         }
 
         ray.BeginDrawing();
-        ray.ClearBackground(ray.RAYWHITE);
+        ray.ClearBackground(BG_COLOR);
         grid.draw();
         ray.EndDrawing();
     }
