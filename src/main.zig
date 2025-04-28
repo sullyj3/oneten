@@ -59,7 +59,8 @@ fn top_left_from_center(
 
 /// trip_code summarizes the prior state of the 3 cells centered on the index
 /// whose new value we want to calculate
-fn rule_110(triplet: [3]bool) bool {
+fn rule_110(triplet: []const bool) bool {
+    std.debug.assert(triplet.len == 3);
     const trip_code: u3 =
         @as(u3, @intFromBool(triplet[0])) << 2 |
         @as(u3, @intFromBool(triplet[1])) << 1 |
@@ -79,22 +80,15 @@ fn rule_110(triplet: [3]bool) bool {
 fn sim_step_110(alloc: Allocator, in_row: []bool) ![]bool {
     const out_row: []bool = try alloc.alloc(bool, in_row.len);
 
-    // obvious perf stuff to explore
-    // - string search for nonzero
-    // - write zeroes to memory in bulk
-    // - look up if 110 can be done in place... seems plausible with constant tmp variables
-
-    // we special case the start and end to avoid indexing out of bounds or
-    // having to check if we're at the end each iteration
     // cells outside our array are implicitly false
-    out_row[0] = rule_110([3]bool{ false, in_row[0], in_row[1] });
+    out_row[0] = rule_110(&[3]bool{ false, in_row[0], in_row[1] });
 
     var windows = std.mem.window(bool, in_row, 3, 1);
     for (out_row[1 .. out_row.len - 1]) |*out_ptr| {
-        out_ptr.* = rule_110(windows.next().?[0..3].*);
+        out_ptr.* = rule_110(windows.next().?);
     }
 
-    out_row[out_row.len - 1] = rule_110([3]bool{
+    out_row[out_row.len - 1] = rule_110(&[3]bool{
         in_row[in_row.len - 2],
         in_row[in_row.len - 1],
         false,
