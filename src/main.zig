@@ -28,33 +28,6 @@ fn draw_cell(on: bool, x: c_int, y: c_int) void {
     }
 }
 
-fn draw_grid_bg(cx: c_int, cy: c_int) void {
-    const GRID_PADDING = 20;
-    const GRID_BORDER_THICKNESS = 5;
-
-    const bg_width = ROW_SIZE * CELL_SIDE +
-        (ROW_SIZE - 1) * CELL_GAP +
-        2 * GRID_PADDING; // edges
-    const bg_height = N_ROWS * CELL_SIDE +
-        (N_ROWS - 1) * CELL_GAP +
-        2 * GRID_PADDING; // edges
-
-    const bg_x: c_int, const bg_y: c_int = top_left_from_center(
-        cx,
-        cy,
-        bg_width,
-        bg_height,
-    );
-
-    const fg_width = bg_width - 2 * GRID_BORDER_THICKNESS;
-    const fg_height = bg_width - 2 * GRID_BORDER_THICKNESS;
-    const fg_x = bg_x + GRID_BORDER_THICKNESS;
-    const fg_y = bg_y + GRID_BORDER_THICKNESS;
-
-    ray.DrawRectangle(bg_x, bg_y, bg_width, bg_height, ray.VIOLET);
-    ray.DrawRectangle(fg_x, fg_y, fg_width, fg_height, ray.RAYWHITE);
-}
-
 fn draw_cell_row(cell_states: []bool, x: c_int, y: c_int) void {
     var x_offs: c_int = 0;
     for (cell_states) |cell| {
@@ -63,8 +36,9 @@ fn draw_cell_row(cell_states: []bool, x: c_int, y: c_int) void {
     }
 }
 
-fn cells_draw_width(n_cells: c_int) c_int {
-    return n_cells * CELL_SIDE + (n_cells - 1) * CELL_GAP;
+fn cells_draw_width(n_cells: usize) c_int {
+    const n_cells_c: c_int = @intCast(n_cells);
+    return n_cells_c * CELL_SIDE + (n_cells_c - 1) * CELL_GAP;
 }
 
 fn top_left_from_center(
@@ -138,6 +112,7 @@ const ArrayListUM = std.ArrayListUnmanaged;
 // rows are owned by the grid
 const OneTenGrid = struct {
     rows: ArrayListUM([]bool),
+    row_width: usize,
 
     // takes ownership of initial_state, which must have been allocated from `alloc`.
     fn init(alloc: Allocator, initial_state: []bool) !OneTenGrid {
@@ -148,6 +123,7 @@ const OneTenGrid = struct {
         rows.appendAssumeCapacity(initial_state);
         return .{
             .rows = rows,
+            .row_width = initial_state.len,
         };
     }
 
@@ -164,6 +140,10 @@ const OneTenGrid = struct {
         try self.rows.append(alloc, next);
     }
 
+    fn n_rows(self: OneTenGrid) usize {
+        return self.rows.items.len;
+    }
+
     fn draw(self: OneTenGrid) void {
         const cx: c_int = WIN_WIDTH / 2;
         const cy: c_int = WIN_HEIGHT / 2;
@@ -171,11 +151,11 @@ const OneTenGrid = struct {
         const cells_x: c_int, const cells_y: c_int = top_left_from_center(
             cx,
             cy,
-            cells_draw_width(ROW_SIZE),
-            cells_draw_width(N_ROWS),
+            cells_draw_width(self.row_width),
+            cells_draw_width(self.rows.items.len),
         );
 
-        draw_grid_bg(cx, cy);
+        self.draw_grid_bg(cx, cy);
         for (self.rows.items, 0..) |row, i| {
             draw_cell_row(
                 row,
@@ -183,6 +163,36 @@ const OneTenGrid = struct {
                 cells_y + @as(c_int, @intCast(i)) * (CELL_SIDE + CELL_GAP),
             );
         }
+    }
+
+    fn draw_grid_bg(self: OneTenGrid, cx: c_int, cy: c_int) void {
+        const GRID_PADDING = 20;
+        const GRID_BORDER_THICKNESS = 5;
+
+        const row_width_c: c_int = @as(c_int, @intCast(self.row_width));
+        const n_rows_c: c_int = @as(c_int, @intCast(self.n_rows()));
+
+        const bg_width: c_int = row_width_c * CELL_SIDE +
+            (row_width_c - 1) * CELL_GAP +
+            2 * GRID_PADDING;
+        const bg_height: c_int = n_rows_c * CELL_SIDE +
+            (n_rows_c - 1) * CELL_GAP +
+            2 * GRID_PADDING;
+
+        const bg_x: c_int, const bg_y: c_int = top_left_from_center(
+            cx,
+            cy,
+            bg_width,
+            bg_height,
+        );
+
+        const fg_width = bg_width - 2 * GRID_BORDER_THICKNESS;
+        const fg_height = bg_height - 2 * GRID_BORDER_THICKNESS;
+        const fg_x = bg_x + GRID_BORDER_THICKNESS;
+        const fg_y = bg_y + GRID_BORDER_THICKNESS;
+
+        ray.DrawRectangle(bg_x, bg_y, bg_width, bg_height, ray.VIOLET);
+        ray.DrawRectangle(fg_x, fg_y, fg_width, fg_height, ray.RAYWHITE);
     }
 };
 
@@ -197,9 +207,6 @@ fn init_alternating(cells: []bool) void {
 fn fill(val: bool, cells: []bool) void {
     for (cells) |*cell| cell.* = val;
 }
-
-const ROW_SIZE = 20;
-const N_ROWS = 20;
 
 const WIN_WIDTH = 1080;
 const WIN_HEIGHT = 720;
@@ -216,16 +223,15 @@ pub fn oneten() !void {
     //////////////////////////////////////////////////
 
     // construct initial row
-    const cells0: []bool = try alloc.alloc(bool, ROW_SIZE);
+    const cells0: []bool = try alloc.alloc(bool, 20);
     fill(false, cells0);
     cells0[cells0.len - 1] = true;
 
     // simulate and store some steps
     var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
-    for (0..N_ROWS - 1) |_| {
+    for (0..10 - 1) |_| {
         try grid.append_step(alloc);
     }
-    std.debug.assert(grid.rows.items.len == N_ROWS);
 
     //////////////////////////////////////////////////
 
