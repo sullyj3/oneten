@@ -61,6 +61,7 @@ fn top_left_from_center(
 /// whose new value we want to calculate
 fn rule_110(triplet: []const bool) bool {
     std.debug.assert(triplet.len == 3);
+    // we do this because in zig you can only switch on ints
     const trip_code: u3 =
         @as(u3, @intFromBool(triplet[0])) << 2 |
         @as(u3, @intFromBool(triplet[1])) << 1 |
