@@ -7,26 +7,25 @@ const ray = @cImport({
 const sleep = std.time.sleep;
 const ns_per_s = std.time.ns_per_s;
 
-fn draw_square(x: i32, y: i32, side: i32, color: ray.Color) void {
-    ray.DrawRectangle(x, y, side, side, color);
-}
-
-const CELL_SIDE = 30;
-const CELL_GAP = 3;
+const CELL_SIDE = 40;
+const CELL_GAP = 5;
 const CELL_BORDER_WIDTH = 2;
 
 const BG_COLOR = ray.SKYBLUE;
 const FG_COLOR = ray.DARKBLUE;
 
 fn draw_cell(on: bool, x: i32, y: i32) void {
-    draw_square(x, y, CELL_SIDE, FG_COLOR);
-    if (!on) {
-        draw_square(
-            x + CELL_BORDER_WIDTH,
-            y + CELL_BORDER_WIDTH,
-            CELL_SIDE - 2 * CELL_BORDER_WIDTH,
-            BG_COLOR,
-        );
+    const rect: ray.Rectangle = .{
+        .x = @floatFromInt(x),
+        .y = @floatFromInt(y),
+        .width = CELL_SIDE,
+        .height = CELL_SIDE,
+    };
+
+    if (on) {
+        ray.DrawRectangleRec(rect, FG_COLOR);
+    } else {
+        ray.DrawRectangleLinesEx(rect, CELL_BORDER_WIDTH, FG_COLOR);
     }
 }
 
@@ -184,18 +183,13 @@ const OneTenGrid = struct {
             bg_height,
         );
 
-        const fg_width = bg_width - 2 * GRID_BORDER_THICKNESS;
-        const fg_height = bg_height - 2 * GRID_BORDER_THICKNESS;
-        const fg_x = bg_x + GRID_BORDER_THICKNESS;
-        const fg_y = bg_y + GRID_BORDER_THICKNESS;
-
-        const bg_width_c: c_int = @intCast(bg_width);
-        const bg_height_c: c_int = @intCast(bg_height);
-        const fg_width_c: c_int = @intCast(fg_width);
-        const fg_height_c: c_int = @intCast(fg_height);
-
-        ray.DrawRectangle(bg_x, bg_y, bg_width_c, bg_height_c, FG_COLOR);
-        ray.DrawRectangle(fg_x, fg_y, fg_width_c, fg_height_c, BG_COLOR);
+        const rect: ray.Rectangle = .{
+            .x = @floatFromInt(bg_x),
+            .y = @floatFromInt(bg_y),
+            .width = @floatFromInt(bg_width),
+            .height = @floatFromInt(bg_height),
+        };
+        ray.DrawRectangleLinesEx(rect, GRID_BORDER_THICKNESS, FG_COLOR);
     }
 };
 
@@ -214,7 +208,7 @@ pub fn oneten() !void {
     //////////////////////////////////////////////////
 
     // construct initial row
-    const cells0: []bool = try alloc.alloc(bool, 30);
+    const cells0: []bool = try alloc.alloc(bool, 20);
     @memset(cells0, false);
     cells0[cells0.len - 1] = true;
     var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
