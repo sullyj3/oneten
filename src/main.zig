@@ -163,6 +163,27 @@ const OneTenGrid = struct {
         const next: []bool = try sim_step_110(alloc, prev);
         try self.rows.append(alloc, next);
     }
+
+    fn draw(self: OneTenGrid) void {
+        const cx: c_int = WIN_WIDTH / 2;
+        const cy: c_int = WIN_HEIGHT / 2;
+
+        const cells_x: c_int, const cells_y: c_int = top_left_from_center(
+            cx,
+            cy,
+            cells_draw_width(ROW_SIZE),
+            cells_draw_width(N_ROWS),
+        );
+
+        draw_grid_bg(cx, cy);
+        for (self.rows.items, 0..) |row, i| {
+            draw_cell_row(
+                row,
+                cells_x,
+                cells_y + @as(c_int, @intCast(i)) * (CELL_SIDE + CELL_GAP),
+            );
+        }
+    }
 };
 
 fn init_alternating(cells: []bool) void {
@@ -208,23 +229,10 @@ pub fn oneten() !void {
 
     //////////////////////////////////////////////////
 
-    const cx: c_int = WIN_WIDTH / 2;
-    const cy: c_int = WIN_HEIGHT / 2;
-
-    const cells_x: c_int, const cells_y: c_int = top_left_from_center(
-        cx,
-        cy,
-        cells_draw_width(ROW_SIZE),
-        cells_draw_width(N_ROWS),
-    );
-
     while (!ray.WindowShouldClose()) {
         ray.BeginDrawing();
         ray.ClearBackground(ray.RAYWHITE);
-        draw_grid_bg(cx, cy);
-        for (grid.rows.items, 0..) |row, i| {
-            draw_cell_row(row, cells_x, cells_y + @as(c_int, @intCast(i)) * (CELL_SIDE + CELL_GAP));
-        }
+        grid.draw();
         ray.EndDrawing();
     }
 }
