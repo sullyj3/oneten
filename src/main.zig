@@ -39,19 +39,21 @@ fn draw_cell_row(cell_states: []bool, x: i32, y: i32) void {
     }
 }
 
-fn cells_draw_width(n_cells: usize) i32 {
+fn cells_draw_width(n_cells: usize) u32 {
     return @intCast(n_cells * CELL_SIDE + (n_cells - 1) * CELL_GAP);
 }
 
 fn top_left_from_center(
     cx: i32,
     cy: i32,
-    width: i32,
-    height: i32,
+    width: u32,
+    height: u32,
 ) struct { i32, i32 } {
+    const half_width: i32 = @intCast(width / 2);
+    const half_height: i32 = @intCast(height / 2);
     return .{
-        cx - @divTrunc(width, 2),
-        cy - @divTrunc(height, 2),
+        cx - half_width,
+        cy - half_height,
     };
 }
 
@@ -166,14 +168,14 @@ const OneTenGrid = struct {
         const GRID_PADDING = 20;
         const GRID_BORDER_THICKNESS = 5;
 
-        const row_width: i32 = @intCast(self.row_width);
-        const n_rows_i32: i32 = @intCast(self.n_rows());
+        const row_width: u32 = @truncate(self.row_width);
+        const n_rows_u: u32 = @truncate(self.n_rows());
 
-        const bg_width: i32 = row_width * CELL_SIDE +
+        const bg_width: u32 = row_width * CELL_SIDE +
             (row_width - 1) * CELL_GAP +
             2 * GRID_PADDING;
-        const bg_height: i32 = n_rows_i32 * CELL_SIDE +
-            (n_rows_i32 - 1) * CELL_GAP +
+        const bg_height: u32 = n_rows_u * CELL_SIDE +
+            (n_rows_u - 1) * CELL_GAP +
             2 * GRID_PADDING;
 
         const bg_x: i32, const bg_y: i32 = top_left_from_center(
@@ -188,8 +190,13 @@ const OneTenGrid = struct {
         const fg_x = bg_x + GRID_BORDER_THICKNESS;
         const fg_y = bg_y + GRID_BORDER_THICKNESS;
 
-        ray.DrawRectangle(bg_x, bg_y, bg_width, bg_height, FG_COLOR);
-        ray.DrawRectangle(fg_x, fg_y, fg_width, fg_height, BG_COLOR);
+        const bg_width_c: c_int = @intCast(bg_width);
+        const bg_height_c: c_int = @intCast(bg_height);
+        const fg_width_c: c_int = @intCast(fg_width);
+        const fg_height_c: c_int = @intCast(fg_height);
+
+        ray.DrawRectangle(bg_x, bg_y, bg_width_c, bg_height_c, FG_COLOR);
+        ray.DrawRectangle(fg_x, fg_y, fg_width_c, fg_height_c, BG_COLOR);
     }
 };
 
