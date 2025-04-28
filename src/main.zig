@@ -211,41 +211,44 @@ const Sfx = struct {
     }
 };
 
+fn handle_input(grid: *OneTenGrid, sfx: Sfx) !void {
+    if (ray.IsKeyPressed(ray.KEY_SPACE)) {
+        ray.PlaySound(sfx.blip);
+        try grid.append_step();
+    }
+}
+
+fn draw(grid: OneTenGrid) void {
+    ray.BeginDrawing();
+    defer ray.EndDrawing();
+    ray.ClearBackground(BG_COLOR);
+    grid.draw();
+}
+
 pub fn oneten() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
 
     const sfx = Sfx.init();
     defer sfx.deinit();
-
     ray.PlaySound(sfx.startup);
 
-    //////////////////////////////////////////////////
     const title = "OneTen";
     ray.InitWindow(WIN_WIDTH, WIN_HEIGHT, title);
     defer ray.CloseWindow();
     ray.SetTargetFPS(60);
-    //////////////////////////////////////////////////
 
-    // construct initial row
     var grid: OneTenGrid = try OneTenGrid.init(alloc, 25);
     defer grid.deinit();
-
     const row0 = grid.rows.getLast();
     row0[row0.len - 1] = true;
 
     //////////////////////////////////////////////////
-
+    // Main loop
+    //////////////////////////////////////////////////
     while (!ray.WindowShouldClose()) {
-        if (ray.IsKeyPressed(ray.KEY_SPACE)) {
-            ray.PlaySound(sfx.blip);
-            try grid.append_step();
-        }
-
-        ray.BeginDrawing();
-        ray.ClearBackground(BG_COLOR);
-        grid.draw();
-        ray.EndDrawing();
+        try handle_input(&grid, sfx);
+        draw(grid);
     }
 }
 
