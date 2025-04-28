@@ -133,6 +133,38 @@ fn sim_step_110(alloc: Allocator, in_row: []bool) ![]bool {
     return out_row;
 }
 
+const ArrayListUM = std.ArrayListUnmanaged;
+
+// rows are owned by the grid
+const OneTenGrid = struct {
+    rows: ArrayListUM([]bool),
+
+    // takes ownership of initial_state, which must have been allocated from `alloc`.
+    fn init(alloc: Allocator, initial_state: []bool) !OneTenGrid {
+        var rows: ArrayListUM([]bool) = try ArrayListUM([]bool).initCapacity(
+            alloc,
+            32,
+        );
+        rows.appendAssumeCapacity(initial_state);
+        return .{
+            .rows = rows,
+        };
+    }
+
+    fn deinit(self: OneTenGrid, alloc: Allocator) void {
+        for (self.rows.items) |row| {
+            alloc.free(row);
+        }
+        self.rows.deinit();
+    }
+
+    fn append_step(self: *OneTenGrid, alloc: Allocator) !void {
+        const prev: []bool = self.rows.getLast();
+        const next: []bool = try sim_step_110(alloc, prev);
+        try self.rows.append(alloc, next);
+    }
+};
+
 fn init_alternating(cells: []bool) void {
     var toggle: bool = true;
     inline for (0..cells.len) |i| {
@@ -168,13 +200,11 @@ pub fn oneten() !void {
     cells0[cells0.len - 1] = true;
 
     // simulate and store some steps
-    var rows: [N_ROWS][]bool = undefined;
-    rows[0] = cells0;
-
-    for (rows[1..], 1..) |*row, i| {
-        row.* = try sim_step_110(alloc, rows[i - 1]);
+    var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
+    for (0..N_ROWS - 1) |_| {
+        try grid.append_step(alloc);
     }
-    defer for (rows) |row| alloc.free(row);
+    std.debug.assert(grid.rows.items.len == N_ROWS);
 
     //////////////////////////////////////////////////
 
@@ -192,7 +222,7 @@ pub fn oneten() !void {
         ray.BeginDrawing();
         ray.ClearBackground(ray.RAYWHITE);
         draw_grid_bg(cx, cy);
-        for (rows, 0..) |row, i| {
+        for (grid.rows.items, 0..) |row, i| {
             draw_cell_row(row, cells_x, cells_y + @as(c_int, @intCast(i)) * (CELL_SIDE + CELL_GAP));
         }
         ray.EndDrawing();
