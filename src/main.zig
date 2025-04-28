@@ -8,6 +8,7 @@ const Allocator = std.mem.Allocator;
 
 const sleep = std.time.sleep;
 const ns_per_s = std.time.ns_per_s;
+const ns_per_ms = std.time.ns_per_ms;
 
 const CELL_SIDE = 35;
 const CELL_GAP = 4;
@@ -195,6 +196,7 @@ const WIN_HEIGHT = 720;
 const Sfx = struct {
     startup: ray.Sound,
     blip: ray.Sound,
+    poweroff: ray.Sound,
 
     fn init() Sfx {
         ray.InitAudioDevice();
@@ -203,29 +205,54 @@ const Sfx = struct {
         return .{
             .startup = ray.LoadSound("res/startup.wav"),
             .blip = ray.LoadSound("res/blip.wav"),
+            .poweroff = ray.LoadSound("res/poweroff.wav"),
         };
     }
 
     fn deinit(self: *const Sfx) void {
         ray.UnloadSound(self.startup);
         ray.UnloadSound(self.blip);
+        ray.UnloadSound(self.poweroff);
         ray.CloseAudioDevice();
     }
 };
 
-fn handle_input(grid: *OneTenGrid, sfx: Sfx) !void {
+fn handle_input(state: *State, sfx: Sfx) !void {
     if (ray.IsKeyPressed(ray.KEY_SPACE)) {
         ray.PlaySound(sfx.blip);
-        try grid.append_step();
+        try state.grid.append_step();
+    }
+
+    if (ray.IsKeyPressed(ray.KEY_Q)) {
+        state.quit = true;
     }
 }
 
-fn draw(grid: OneTenGrid) void {
+fn draw(state: State) void {
     ray.BeginDrawing();
     defer ray.EndDrawing();
     ray.ClearBackground(BG_COLOR);
-    grid.draw();
+    state.grid.draw();
 }
+
+const State = struct {
+    grid: OneTenGrid,
+    quit: bool = false,
+
+    alloc: Allocator,
+
+    fn init(alloc: Allocator) !State {
+        var grid: OneTenGrid = try OneTenGrid.init(alloc, 25);
+        const row0 = grid.rows.getLast();
+        row0[row0.len - 1] = true;
+
+        return .{ .grid = grid, .alloc = alloc };
+    }
+
+    fn deinit(self: *State) void {
+        self.grid.deinit();
+    }
+};
 
 pub fn oneten() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -240,17 +267,19 @@ pub fn oneten() !void {
     defer ray.CloseWindow();
     ray.SetTargetFPS(60);
 
-    var grid: OneTenGrid = try OneTenGrid.init(alloc, 25);
-    defer grid.deinit();
-    const row0 = grid.rows.getLast();
-    row0[row0.len - 1] = true;
+    var state = try State.init(alloc);
+    defer state.deinit();
 
     //////////////////////////////////////////////////
     // Main loop
     //////////////////////////////////////////////////
-    while (!ray.WindowShouldClose()) {
-        try handle_input(&grid, sfx);
-        draw(grid);
+    while (!ray.WindowShouldClose() and !state.quit) {
+        try handle_input(&state, sfx);
+        draw(state);
+    }
+    ray.PlaySound(sfx.poweroff);
+    while (ray.IsSoundPlaying(sfx.poweroff)) {
+        sleep(10 * ns_per_ms);
     }
 }
 
