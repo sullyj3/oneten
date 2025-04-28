@@ -223,19 +223,20 @@ pub fn oneten() !void {
     //////////////////////////////////////////////////
 
     // construct initial row
-    const cells0: []bool = try alloc.alloc(bool, 20);
+    const cells0: []bool = try alloc.alloc(bool, 30);
     fill(false, cells0);
     cells0[cells0.len - 1] = true;
 
     // simulate and store some steps
     var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
-    for (0..10 - 1) |_| {
-        try grid.append_step(alloc);
-    }
 
     //////////////////////////////////////////////////
 
     while (!ray.WindowShouldClose()) {
+        if (ray.IsKeyPressed(ray.KEY_SPACE)) {
+            try grid.append_step(alloc);
+        }
+
         ray.BeginDrawing();
         ray.ClearBackground(ray.RAYWHITE);
         grid.draw();
