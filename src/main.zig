@@ -180,16 +180,16 @@ fn fill(val: bool, cells: []bool) void {
 const ROW_SIZE = 20;
 const N_ROWS = 20;
 
+const WIN_WIDTH = 1080;
+const WIN_HEIGHT = 720;
+
 pub fn oneten() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
 
     //////////////////////////////////////////////////
-    const win_width = 1080;
-    const win_height = 720;
-
     const title = "oneten";
-    ray.InitWindow(win_width, win_height, title);
+    ray.InitWindow(WIN_WIDTH, WIN_HEIGHT, title);
     defer ray.CloseWindow();
     ray.SetTargetFPS(60);
     //////////////////////////////////////////////////
@@ -208,8 +208,8 @@ pub fn oneten() !void {
 
     //////////////////////////////////////////////////
 
-    const cx: c_int = win_width / 2;
-    const cy: c_int = win_height / 2;
+    const cx: c_int = WIN_WIDTH / 2;
+    const cy: c_int = WIN_HEIGHT / 2;
 
     const cells_x: c_int, const cells_y: c_int = top_left_from_center(
         cx,
