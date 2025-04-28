@@ -8,7 +8,7 @@ const ray = @cImport({
 const sleep = std.time.sleep;
 const ns_per_s = std.time.ns_per_s;
 
-fn draw_square(x: c_int, y: c_int, side: c_int, color: ray.Color) void {
+fn draw_square(x: i32, y: i32, side: i32, color: ray.Color) void {
     ray.DrawRectangle(x, y, side, side, color);
 }
 
@@ -19,7 +19,7 @@ const CELL_BORDER_WIDTH = 2;
 const BG_COLOR = ray.SKYBLUE;
 const FG_COLOR = ray.DARKBLUE;
 
-fn draw_cell(on: bool, x: c_int, y: c_int) void {
+fn draw_cell(on: bool, x: i32, y: i32) void {
     draw_square(x, y, CELL_SIDE, FG_COLOR);
     if (!on) {
         draw_square(
@@ -31,25 +31,24 @@ fn draw_cell(on: bool, x: c_int, y: c_int) void {
     }
 }
 
-fn draw_cell_row(cell_states: []bool, x: c_int, y: c_int) void {
-    var x_offs: c_int = 0;
+fn draw_cell_row(cell_states: []bool, x: i32, y: i32) void {
+    var x_offs: i32 = 0;
     for (cell_states) |cell| {
         draw_cell(cell, x + x_offs, y);
         x_offs += CELL_SIDE + CELL_GAP;
     }
 }
 
-fn cells_draw_width(n_cells: usize) c_int {
-    const n_cells_c: c_int = @intCast(n_cells);
-    return n_cells_c * CELL_SIDE + (n_cells_c - 1) * CELL_GAP;
+fn cells_draw_width(n_cells: usize) i32 {
+    return @intCast(n_cells * CELL_SIDE + (n_cells - 1) * CELL_GAP);
 }
 
 fn top_left_from_center(
-    cx: c_int,
-    cy: c_int,
-    width: c_int,
-    height: c_int,
-) struct { c_int, c_int } {
+    cx: i32,
+    cy: i32,
+    width: i32,
+    height: i32,
+) struct { i32, i32 } {
     return .{
         cx - @divTrunc(width, 2),
         cy - @divTrunc(height, 2),
@@ -146,10 +145,10 @@ const OneTenGrid = struct {
     }
 
     fn draw(self: OneTenGrid) void {
-        const cx: c_int = WIN_WIDTH / 2;
-        const cy: c_int = WIN_HEIGHT / 2;
+        const cx: i32 = WIN_WIDTH / 2;
+        const cy: i32 = WIN_HEIGHT / 2;
 
-        const cells_x: c_int, const cells_y: c_int = top_left_from_center(
+        const cells_x: i32, const cells_y: i32 = top_left_from_center(
             cx,
             cy,
             cells_draw_width(self.row_width),
@@ -158,29 +157,26 @@ const OneTenGrid = struct {
 
         self.draw_grid_bg(cx, cy);
         for (self.rows.items, 0..) |row, i| {
-            draw_cell_row(
-                row,
-                cells_x,
-                cells_y + @as(c_int, @intCast(i)) * (CELL_SIDE + CELL_GAP),
-            );
+            const y_offs: i32 = @intCast(i * (CELL_SIDE + CELL_GAP));
+            draw_cell_row(row, cells_x, cells_y + y_offs);
         }
     }
 
-    fn draw_grid_bg(self: OneTenGrid, cx: c_int, cy: c_int) void {
+    fn draw_grid_bg(self: OneTenGrid, cx: i32, cy: i32) void {
         const GRID_PADDING = 20;
         const GRID_BORDER_THICKNESS = 5;
 
-        const row_width_c: c_int = @as(c_int, @intCast(self.row_width));
-        const n_rows_c: c_int = @as(c_int, @intCast(self.n_rows()));
+        const row_width: i32 = @intCast(self.row_width);
+        const n_rows_i32: i32 = @intCast(self.n_rows());
 
-        const bg_width: c_int = row_width_c * CELL_SIDE +
-            (row_width_c - 1) * CELL_GAP +
+        const bg_width: i32 = row_width * CELL_SIDE +
+            (row_width - 1) * CELL_GAP +
             2 * GRID_PADDING;
-        const bg_height: c_int = n_rows_c * CELL_SIDE +
-            (n_rows_c - 1) * CELL_GAP +
+        const bg_height: i32 = n_rows_i32 * CELL_SIDE +
+            (n_rows_i32 - 1) * CELL_GAP +
             2 * GRID_PADDING;
 
-        const bg_x: c_int, const bg_y: c_int = top_left_from_center(
+        const bg_x: i32, const bg_y: i32 = top_left_from_center(
             cx,
             cy,
             bg_width,
