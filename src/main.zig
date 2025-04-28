@@ -197,10 +197,6 @@ const OneTenGrid = struct {
     }
 };
 
-fn fill(val: bool, cells: []bool) void {
-    for (cells) |*cell| cell.* = val;
-}
-
 const WIN_WIDTH = 1080;
 const WIN_HEIGHT = 720;
 
@@ -217,7 +213,7 @@ pub fn oneten() !void {
 
     // construct initial row
     const cells0: []bool = try alloc.alloc(bool, 30);
-    fill(false, cells0);
+    @memset(cells0, false);
     cells0[cells0.len - 1] = true;
     var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
     defer grid.deinit(alloc);
