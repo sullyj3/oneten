@@ -191,6 +191,16 @@ pub fn oneten() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
 
+    ray.InitAudioDevice();
+    defer ray.CloseAudioDevice();
+
+    const startup_sound = ray.LoadSound("res/startup.wav");
+    ray.PlaySound(startup_sound);
+    defer ray.UnloadSound(startup_sound);
+
+    const blip = ray.LoadSound("res/blip.wav");
+    defer ray.UnloadSound(blip);
+
     //////////////////////////////////////////////////
     const title = "oneten";
     ray.InitWindow(WIN_WIDTH, WIN_HEIGHT, title);
@@ -209,6 +219,7 @@ pub fn oneten() !void {
 
     while (!ray.WindowShouldClose()) {
         if (ray.IsKeyPressed(ray.KEY_SPACE)) {
+            ray.PlaySound(blip);
             try grid.append_step(alloc);
         }
 
