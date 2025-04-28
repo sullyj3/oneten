@@ -198,6 +198,8 @@ const Sfx = struct {
 
     fn init() Sfx {
         ray.InitAudioDevice();
+
+        // todo this depends on CWD
         return .{
             .startup = ray.LoadSound("res/startup.wav"),
             .blip = ray.LoadSound("res/blip.wav"),
