@@ -53,8 +53,6 @@ fn top_left_from_center(
     };
 }
 
-const BoolTriple = struct { bool, bool, bool };
-
 /// trip_code summarizes the prior state of the 3 cells centered on the index
 /// whose new value we want to calculate
 fn rule_110(trip_code: u3) bool {
@@ -196,14 +194,6 @@ const OneTenGrid = struct {
     }
 };
 
-fn init_alternating(cells: []bool) void {
-    var toggle: bool = true;
-    inline for (0..cells.len) |i| {
-        cells[i] = toggle;
-        toggle = !toggle;
-    }
-}
-
 fn fill(val: bool, cells: []bool) void {
     for (cells) |*cell| cell.* = val;
 }
@@ -226,8 +216,6 @@ pub fn oneten() !void {
     const cells0: []bool = try alloc.alloc(bool, 30);
     fill(false, cells0);
     cells0[cells0.len - 1] = true;
-
-    // simulate and store some steps
     var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
 
     //////////////////////////////////////////////////
