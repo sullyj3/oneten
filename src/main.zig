@@ -105,6 +105,8 @@ const OneTenGrid = struct {
     rows: ArrayListUM([]bool),
     row_width: usize,
 
+    alloc: Allocator,
+
     // takes ownership of initial_state, which must have been allocated from `alloc`.
     fn init(alloc: Allocator, initial_state: []bool) !OneTenGrid {
         var rows: ArrayListUM([]bool) = try ArrayListUM([]bool).initCapacity(
@@ -115,20 +117,21 @@ const OneTenGrid = struct {
         return .{
             .rows = rows,
             .row_width = initial_state.len,
+            .alloc = alloc,
         };
     }
 
-    fn deinit(self: *OneTenGrid, alloc: Allocator) void {
+    fn deinit(self: *OneTenGrid) void {
         for (self.rows.items) |row| {
-            alloc.free(row);
+            self.alloc.free(row);
         }
-        self.rows.deinit(alloc);
+        self.rows.deinit(self.alloc);
     }
 
-    fn append_step(self: *OneTenGrid, alloc: Allocator) !void {
+    fn append_step(self: *OneTenGrid) !void {
         const prev: []bool = self.rows.getLast();
-        const next: []bool = try sim_step_110(alloc, prev);
-        try self.rows.append(alloc, next);
+        const next: []bool = try sim_step_110(self.alloc, prev);
+        try self.rows.append(self.alloc, next);
     }
 
     fn n_rows(self: OneTenGrid) usize {
@@ -227,14 +230,14 @@ pub fn oneten() !void {
     @memset(cells0, false);
     cells0[cells0.len - 1] = true;
     var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
-    defer grid.deinit(alloc);
+    defer grid.deinit();
 
     //////////////////////////////////////////////////
 
     while (!ray.WindowShouldClose()) {
         if (ray.IsKeyPressed(ray.KEY_SPACE)) {
             ray.PlaySound(sfx.blip);
-            try grid.append_step(alloc);
+            try grid.append_step();
         }
 
         ray.BeginDrawing();
