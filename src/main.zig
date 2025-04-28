@@ -7,8 +7,8 @@ const ray = @cImport({
 const sleep = std.time.sleep;
 const ns_per_s = std.time.ns_per_s;
 
-const CELL_SIDE = 40;
-const CELL_GAP = 5;
+const CELL_SIDE = 35;
+const CELL_GAP = 4;
 const CELL_BORDER_WIDTH = 2;
 
 const BG_COLOR = ray.SKYBLUE;
@@ -57,7 +57,11 @@ fn top_left_from_center(
 
 /// trip_code summarizes the prior state of the 3 cells centered on the index
 /// whose new value we want to calculate
-fn rule_110(trip_code: u3) bool {
+fn rule_110(triplet: [3]bool) bool {
+    const trip_code: u3 =
+        @as(u3, @intFromBool(triplet[0])) << 2 |
+        @as(u3, @intFromBool(triplet[1])) << 1 |
+        @as(u3, @intFromBool(triplet[2])) << 0;
     return switch (trip_code) {
         0b111 => false,
         0b110 => true,
@@ -83,26 +87,20 @@ fn sim_step_110(alloc: Allocator, in_row: []bool) ![]bool {
     // we special case the start and end to avoid indexing out of bounds or
     // having to check if we're at the end each iteration
     // cells outside our array are implicitly false
-    var trip_code: u3 =
-        @as(u3, @intFromBool(false)) << 2 |
-        @as(u3, @intFromBool(in_row[0])) << 1 |
-        @as(u3, @intFromBool(in_row[1])) << 0;
-    out_row[0] = rule_110(trip_code);
+    var i: usize = 0;
+    out_row[i] = rule_110([3]bool{ false, in_row[0], in_row[1] });
 
-    for (1..out_row.len - 1) |i| {
-        trip_code =
-            @as(u3, @intFromBool(in_row[i - 1])) << 2 |
-            @as(u3, @intFromBool(in_row[i])) << 1 |
-            @as(u3, @intFromBool(in_row[i + 1])) << 0;
-
-        out_row[i] = rule_110(trip_code);
+    i += 1;
+    var it = std.mem.window(bool, in_row, 3, 1);
+    while (it.next()) |trip| : (i += 1) {
+        out_row[i] = rule_110(trip[0..3].*);
     }
 
-    trip_code =
-        @as(u3, @intFromBool(in_row[in_row.len - 2])) << 2 |
-        @as(u3, @intFromBool(in_row[in_row.len - 1])) << 1 |
-        @as(u3, @intFromBool(false)) << 0;
-    out_row[in_row.len - 1] = rule_110(trip_code);
+    out_row[i] = rule_110([3]bool{
+        in_row[in_row.len - 2],
+        in_row[in_row.len - 1],
+        false,
+    });
 
     return out_row;
 }
@@ -208,7 +206,7 @@ pub fn oneten() !void {
     //////////////////////////////////////////////////
 
     // construct initial row
-    const cells0: []bool = try alloc.alloc(bool, 20);
+    const cells0: []bool = try alloc.alloc(bool, 18);
     @memset(cells0, false);
     cells0[cells0.len - 1] = true;
     var grid: OneTenGrid = try OneTenGrid.init(alloc, cells0);
