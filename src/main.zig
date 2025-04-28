@@ -202,7 +202,7 @@ pub fn oneten() !void {
     defer ray.UnloadSound(blip);
 
     //////////////////////////////////////////////////
-    const title = "oneten";
+    const title = "OneTen";
     ray.InitWindow(WIN_WIDTH, WIN_HEIGHT, title);
     defer ray.CloseWindow();
     ray.SetTargetFPS(60);
