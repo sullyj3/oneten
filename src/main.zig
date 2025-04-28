@@ -187,19 +187,33 @@ const OneTenGrid = struct {
 const WIN_WIDTH = 1080;
 const WIN_HEIGHT = 720;
 
+const Sfx = struct {
+    startup: ray.Sound,
+    blip: ray.Sound,
+
+    fn init() Sfx {
+        ray.InitAudioDevice();
+        return .{
+            .startup = ray.LoadSound("res/startup.wav"),
+            .blip = ray.LoadSound("res/blip.wav"),
+        };
+    }
+
+    fn deinit(self: *const Sfx) void {
+        ray.UnloadSound(self.startup);
+        ray.UnloadSound(self.blip);
+        ray.CloseAudioDevice();
+    }
+};
+
 pub fn oneten() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
 
-    ray.InitAudioDevice();
-    defer ray.CloseAudioDevice();
+    const sfx = Sfx.init();
+    defer sfx.deinit();
 
-    const startup_sound = ray.LoadSound("res/startup.wav");
-    ray.PlaySound(startup_sound);
-    defer ray.UnloadSound(startup_sound);
-
-    const blip = ray.LoadSound("res/blip.wav");
-    defer ray.UnloadSound(blip);
+    ray.PlaySound(sfx.startup);
 
     //////////////////////////////////////////////////
     const title = "OneTen";
@@ -219,7 +233,7 @@ pub fn oneten() !void {
 
     while (!ray.WindowShouldClose()) {
         if (ray.IsKeyPressed(ray.KEY_SPACE)) {
-            ray.PlaySound(blip);
+            ray.PlaySound(sfx.blip);
             try grid.append_step(alloc);
         }
 
