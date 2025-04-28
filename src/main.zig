@@ -255,31 +255,34 @@ const State = struct {
 };
 
 pub fn oneten() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const alloc = gpa.allocator();
-
     const sfx = Sfx.init();
     defer sfx.deinit();
     ray.PlaySound(sfx.startup);
 
-    const title = "OneTen";
-    ray.InitWindow(WIN_WIDTH, WIN_HEIGHT, title);
-    defer ray.CloseWindow();
-    ray.SetTargetFPS(60);
+    {
+        const title = "OneTen";
+        ray.InitWindow(WIN_WIDTH, WIN_HEIGHT, title);
+        defer ray.CloseWindow();
+        ray.SetTargetFPS(60);
 
-    var state = try State.init(alloc);
-    defer state.deinit();
+        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+        const alloc = gpa.allocator();
 
-    //////////////////////////////////////////////////
-    // Main loop
-    //////////////////////////////////////////////////
-    while (!ray.WindowShouldClose() and !state.quit) {
-        try handle_input(&state, sfx);
-        draw(state);
+        var state = try State.init(alloc);
+        defer state.deinit();
+
+        //////////////////////////////////////////////////
+        // Main loop
+        //////////////////////////////////////////////////
+        while (!ray.WindowShouldClose() and !state.quit) {
+            try handle_input(&state, sfx);
+            draw(state);
+        }
     }
+
     ray.PlaySound(sfx.poweroff);
     while (ray.IsSoundPlaying(sfx.poweroff)) {
-        sleep(10 * ns_per_ms);
+        sleep(3 * ns_per_ms);
     }
 }
 
