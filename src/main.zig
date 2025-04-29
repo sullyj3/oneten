@@ -109,6 +109,13 @@ const UVec2 = struct {
             .y = self.y * other.y,
         };
     }
+
+    fn plus(self: UVec2, other: UVec2) UVec2 {
+        return .{
+            .x = self.x + other.x,
+            .y = self.y + other.y,
+        };
+    }
 };
 
 const IVec2 = struct {
@@ -191,6 +198,8 @@ const OneTenGrid = struct {
         return self.rows.items.len;
     }
 
+    const GRID_PADDING = 20;
+
     fn draw(self: OneTenGrid) void {
         const cx: i32 = WIN_WIDTH / 2;
         const cy: i32 = WIN_HEIGHT / 2;
@@ -202,7 +211,7 @@ const OneTenGrid = struct {
             cells_draw_width(self.rows.items.len),
         );
 
-        self.draw_grid_bg(cx, cy);
+        self.draw_grid_bg(cells_x - GRID_PADDING, cells_y - GRID_PADDING);
         for (self.rows.items, 0..) |row, i| {
             const y_offs: i32 = @intCast(i * (CELL_SIDE + CELL_GAP));
             draw_cell_row(row, cells_x, cells_y + y_offs);
@@ -223,32 +232,37 @@ const OneTenGrid = struct {
         ray.drawRectangleLinesEx(rect, CELL_BORDER_WIDTH, SEL_COLOR);
     }
 
-    fn draw_grid_bg(self: OneTenGrid, cx: i32, cy: i32) void {
-        const GRID_PADDING = 20;
-        const GRID_BORDER_THICKNESS = 5;
-
+    fn cells_dimensions(self: OneTenGrid) UVec2 {
         const row_width: u32 = @truncate(self.row_width);
         const n_rows_u: u32 = @truncate(self.n_rows());
 
-        const bg_width: u32 = row_width * CELL_SIDE +
-            (row_width - 1) * CELL_GAP +
-            2 * GRID_PADDING;
-        const bg_height: u32 = n_rows_u * CELL_SIDE +
-            (n_rows_u - 1) * CELL_GAP +
-            2 * GRID_PADDING;
+        const width: u32 = row_width * CELL_SIDE +
+            (row_width - 1) * CELL_GAP;
+        const height: u32 = n_rows_u * CELL_SIDE +
+            (n_rows_u - 1) * CELL_GAP;
 
-        const bg_x: i32, const bg_y: i32 = top_left_from_center(
-            cx,
-            cy,
-            bg_width,
-            bg_height,
-        );
+        return .{
+            .x = width,
+            .y = height,
+        };
+    }
+
+    fn border_dimensions(cell_dimensions: UVec2) UVec2 {
+        return cell_dimensions.plus(.{
+            .x = 2 * GRID_PADDING,
+            .y = 2 * GRID_PADDING,
+        });
+    }
+
+    fn draw_grid_bg(self: OneTenGrid, x: i32, y: i32) void {
+        const GRID_BORDER_THICKNESS = 5;
+        const dimensions = OneTenGrid.border_dimensions(self.cells_dimensions());
 
         const rect: ray.Rectangle = .{
-            .x = @floatFromInt(bg_x),
-            .y = @floatFromInt(bg_y),
-            .width = @floatFromInt(bg_width),
-            .height = @floatFromInt(bg_height),
+            .x = @floatFromInt(x),
+            .y = @floatFromInt(y),
+            .width = @floatFromInt(dimensions.x),
+            .height = @floatFromInt(dimensions.y),
         };
         ray.drawRectangleLinesEx(rect, GRID_BORDER_THICKNESS, FG_COLOR);
     }
@@ -470,6 +484,7 @@ fn draw(state: State) void {
     defer ray.endDrawing();
     ray.clearBackground(BG_COLOR);
     state.grid.draw();
+    ray.drawFPS(20, 20);
 }
 
 const InputState = struct {
@@ -531,9 +546,6 @@ pub fn oneten() !void {
         var state = try State.init(alloc);
         defer state.deinit();
 
-        //////////////////////////////////////////////////
-        // Main loop
-        //////////////////////////////////////////////////
         var delta_timer = DeltaTimer.init();
         while (!ray.windowShouldClose() and !state.quit) {
             const dt_ns: i128 = delta_timer.lap_ns();
