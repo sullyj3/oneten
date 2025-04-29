@@ -414,9 +414,14 @@ pub fn oneten() !void {
     sfx.play(SoundId.startup);
 
     {
+        ray.setConfigFlags(.{
+            .window_undecorated = true,
+            .window_resizable = false,
+        });
         const title = "OneTen";
         ray.initWindow(WIN_WIDTH, WIN_HEIGHT, title);
         defer ray.closeWindow();
+
         ray.setTargetFPS(60);
 
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
