@@ -1,8 +1,5 @@
 const std = @import("std");
-const ray = @cImport({
-    @cInclude("raylib.h");
-    @cInclude("raymath.h");
-});
+const ray = @import("raylib");
 
 const Allocator = std.mem.Allocator;
 
@@ -14,9 +11,9 @@ const CELL_SIDE = 35;
 const CELL_GAP = 4;
 const CELL_BORDER_WIDTH = 2;
 
-const BG_COLOR = ray.SKYBLUE;
-const FG_COLOR = ray.DARKBLUE;
-const SEL_COLOR = ray.GREEN;
+const BG_COLOR = ray.Color.sky_blue;
+const FG_COLOR = ray.Color.dark_blue;
+const SEL_COLOR = ray.Color.green;
 
 fn draw_cell(on: bool, x: i32, y: i32) void {
     const rect: ray.Rectangle = .{
@@ -27,9 +24,9 @@ fn draw_cell(on: bool, x: i32, y: i32) void {
     };
 
     if (on) {
-        ray.DrawRectangleRec(rect, FG_COLOR);
+        ray.drawRectangleRec(rect, FG_COLOR);
     } else {
-        ray.DrawRectangleLinesEx(rect, CELL_BORDER_WIDTH, FG_COLOR);
+        ray.drawRectangleLinesEx(rect, CELL_BORDER_WIDTH, FG_COLOR);
     }
 }
 
@@ -223,7 +220,7 @@ const OneTenGrid = struct {
             .height = CELL_SIDE,
         };
 
-        ray.DrawRectangleLinesEx(rect, CELL_BORDER_WIDTH, SEL_COLOR);
+        ray.drawRectangleLinesEx(rect, CELL_BORDER_WIDTH, SEL_COLOR);
     }
 
     fn draw_grid_bg(self: OneTenGrid, cx: i32, cy: i32) void {
@@ -253,7 +250,7 @@ const OneTenGrid = struct {
             .width = @floatFromInt(bg_width),
             .height = @floatFromInt(bg_height),
         };
-        ray.DrawRectangleLinesEx(rect, GRID_BORDER_THICKNESS, FG_COLOR);
+        ray.drawRectangleLinesEx(rect, GRID_BORDER_THICKNESS, FG_COLOR);
     }
 
     fn move_selection(self: *OneTenGrid, offs: IVec2) void {
@@ -295,66 +292,68 @@ const Sfx = struct {
     blip: ray.Sound,
     poweroff: ray.Sound,
 
-    fn init() Sfx {
-        ray.InitAudioDevice();
+    fn init() ray.RaylibError!Sfx {
+        ray.initAudioDevice();
 
-        // todo this depends on CWD
-        return .{
-            .startup = ray.LoadSound("res/startup.wav"),
-            .blip = ray.LoadSound("res/blip.wav"),
-            .poweroff = ray.LoadSound("res/poweroff.wav"),
+        const startup: ray.Sound = try ray.loadSound("res/startup.wav");
+        const blip: ray.Sound = try ray.loadSound("res/blip.wav");
+        const poweroff: ray.Sound = try ray.loadSound("res/poweroff.wav");
+        return Sfx{
+            .startup = startup,
+            .blip = blip,
+            .poweroff = poweroff,
         };
     }
 
     fn deinit(self: *const Sfx) void {
-        ray.UnloadSound(self.startup);
-        ray.UnloadSound(self.blip);
-        ray.UnloadSound(self.poweroff);
-        ray.CloseAudioDevice();
+        ray.unloadSound(self.startup);
+        ray.unloadSound(self.blip);
+        ray.unloadSound(self.poweroff);
+        ray.closeAudioDevice();
     }
 };
 
 fn handle_input(state: *State, sfx: Sfx) !void {
-    if (ray.IsKeyPressed(ray.KEY_SPACE)) {
-        ray.PlaySound(sfx.blip);
+    if (ray.isKeyPressed(ray.KeyboardKey.space)) {
+        ray.playSound(sfx.blip);
         state.grid.toggle_selection();
     }
 
-    if (ray.IsKeyPressed(ray.KEY_ENTER)) {
-        ray.PlaySound(sfx.blip);
+    if (ray.isKeyPressed(ray.KeyboardKey.enter)) {
+        ray.playSound(sfx.blip);
         try state.grid.append_step();
     }
-    if (ray.IsKeyPressed(ray.KEY_BACKSPACE)) {
-        ray.PlaySound(sfx.blip);
+    if (ray.isKeyPressed(ray.KeyboardKey.backspace)) {
+        ray.playSound(sfx.blip);
         state.grid.delete_latest_row();
     }
 
-    if (ray.IsKeyPressed(ray.KEY_LEFT)) {
+    if (ray.isKeyPressed(ray.KeyboardKey.left)) {
         state.grid.move_selection(IVec2{ .x = -1, .y = 0 });
-        ray.PlaySound(sfx.blip);
+        ray.playSound(sfx.blip);
     }
-    if (ray.IsKeyPressed(ray.KEY_RIGHT)) {
+    if (ray.isKeyPressed(ray.KeyboardKey.right)) {
         state.grid.move_selection(IVec2{ .x = 1, .y = 0 });
-        ray.PlaySound(sfx.blip);
+        ray.playSound(sfx.blip);
     }
-    if (ray.IsKeyPressed(ray.KEY_UP)) {
+    if (ray.isKeyPressed(ray.KeyboardKey.up)) {
         state.grid.move_selection(IVec2{ .x = 0, .y = -1 });
-        ray.PlaySound(sfx.blip);
+        ray.playSound(sfx.blip);
     }
-    if (ray.IsKeyPressed(ray.KEY_DOWN)) {
+    if (ray.isKeyPressed(ray.KeyboardKey.down)) {
         state.grid.move_selection(IVec2{ .x = 0, .y = 1 });
-        ray.PlaySound(sfx.blip);
+        ray.playSound(sfx.blip);
     }
 
-    if (ray.IsKeyPressed(ray.KEY_Q)) {
+    if (ray.isKeyPressed(ray.KeyboardKey.q)) {
         state.quit = true;
     }
 }
 
 fn draw(state: State) void {
-    ray.BeginDrawing();
-    defer ray.EndDrawing();
-    ray.ClearBackground(BG_COLOR);
+    ray.beginDrawing();
+    defer ray.endDrawing();
+    ray.clearBackground(BG_COLOR);
     state.grid.draw();
 }
 
@@ -378,15 +377,15 @@ const State = struct {
 };
 
 pub fn oneten() !void {
-    const sfx = Sfx.init();
+    const sfx = try Sfx.init();
     defer sfx.deinit();
-    ray.PlaySound(sfx.startup);
+    ray.playSound(sfx.startup);
 
     {
         const title = "OneTen";
-        ray.InitWindow(WIN_WIDTH, WIN_HEIGHT, title);
-        defer ray.CloseWindow();
-        ray.SetTargetFPS(60);
+        ray.initWindow(WIN_WIDTH, WIN_HEIGHT, title);
+        defer ray.closeWindow();
+        ray.setTargetFPS(60);
 
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
         const alloc = gpa.allocator();
@@ -397,14 +396,14 @@ pub fn oneten() !void {
         //////////////////////////////////////////////////
         // Main loop
         //////////////////////////////////////////////////
-        while (!ray.WindowShouldClose() and !state.quit) {
+        while (!ray.windowShouldClose() and !state.quit) {
             try handle_input(&state, sfx);
             draw(state);
         }
     }
 
-    ray.PlaySound(sfx.poweroff);
-    while (ray.IsSoundPlaying(sfx.poweroff)) {
+    ray.playSound(sfx.poweroff);
+    while (ray.isSoundPlaying(sfx.poweroff)) {
         sleep(3 * ns_per_ms);
     }
 }
