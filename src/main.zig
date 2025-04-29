@@ -271,6 +271,14 @@ const OneTenGrid = struct {
         const ptr: *bool = &self.rows.items[self.selection.y][self.selection.x];
         ptr.* = !ptr.*;
     }
+
+    fn delete_latest_row(self: *OneTenGrid) void {
+        if (self.n_rows() == 1) {
+            return;
+        } else if (self.rows.pop()) |last| {
+            self.alloc.free(last);
+        }
+    }
 };
 
 const WIN_WIDTH = 1080;
@@ -309,6 +317,10 @@ fn handle_input(state: *State, sfx: Sfx) !void {
     if (ray.IsKeyPressed(ray.KEY_ENTER)) {
         ray.PlaySound(sfx.blip);
         try state.grid.append_step();
+    }
+    if (ray.IsKeyPressed(ray.KEY_BACKSPACE)) {
+        ray.PlaySound(sfx.blip);
+        state.grid.delete_latest_row();
     }
 
     if (ray.IsKeyPressed(ray.KEY_LEFT)) {
