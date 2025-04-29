@@ -345,39 +345,119 @@ const Sfx = struct {
     }
 };
 
-fn handle_input(state: *State, sfx: Sfx) !void {
-    if (ray.isKeyPressed(ray.KeyboardKey.space)) {
+const CountdownTimer = struct {
+    duration_ns: i128,
+    remaining_ns: i128,
+    elapsed: bool = false,
+
+    fn new(duration_ns: i128) CountdownTimer {
+        return .{
+            .duration_ns = duration_ns,
+            .remaining_ns = duration_ns,
+            .elapsed = false,
+        };
+    }
+
+    fn new_ms(duration_ms: i128) CountdownTimer {
+        return CountdownTimer.new(duration_ms * std.time.ns_per_ms);
+    }
+
+    fn new_elapsed_ms(duration_ms: i128) CountdownTimer {
+        var timer = CountdownTimer.new(duration_ms * std.time.ns_per_ms);
+        timer.elapsed = true;
+        return timer;
+    }
+
+    fn new_s(duration_s: f64) CountdownTimer {
+        const ns_f: f64 = duration_s * @as(f64, @floatFromInt(std.time.ns_per_s));
+        return CountdownTimer.new(@intFromFloat(ns_f));
+    }
+
+    fn tick_ns(self: *CountdownTimer, dt_ns: i128) void {
+        self.remaining_ns, _ = @subWithOverflow(self.remaining_ns, dt_ns);
+        self.elapsed = self.elapsed or self.remaining_ns <= 0;
+    }
+
+    fn reset(self: *CountdownTimer) void {
+        self.elapsed = false;
+        self.remaining_ns = self.duration_ns;
+    }
+};
+
+const DeltaTimer = struct {
+    last_ns: i128,
+
+    fn init() DeltaTimer {
+        return .{ .last_ns = std.time.nanoTimestamp() };
+    }
+
+    // return time in nanoseconds since init or last lap call
+    fn lap_ns(self: *DeltaTimer) i128 {
+        const now_ns = std.time.nanoTimestamp();
+        const dt_ns = now_ns - self.last_ns;
+        self.last_ns = now_ns;
+        return dt_ns;
+    }
+
+    // return time in seconds since init or last lap call
+    fn lap_s(self: *DeltaTimer) f32 {
+        const NS_IN_S = 1_000_000_000;
+        const dt_ns = self.lap_ns();
+        return @as(f32, @floatFromInt(dt_ns)) / NS_IN_S;
+    }
+};
+
+fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) !void {
+    state.input_state.tick_ns(dt_ns);
+    const input_state = &state.input_state;
+
+    const Key = ray.KeyboardKey;
+    if (ray.isKeyPressed(Key.space)) {
         sfx.play(SoundId.blip);
         state.grid.toggle_selection();
     }
 
-    if (ray.isKeyPressed(ray.KeyboardKey.enter)) {
+    if (ray.isKeyPressed(Key.enter)) {
         sfx.play(SoundId.blip);
         try state.grid.append_step();
     }
-    if (ray.isKeyPressed(ray.KeyboardKey.backspace)) {
-        sfx.play(SoundId.blip);
+    if (ray.isKeyPressed(Key.backspace)) {
+        sfx.play(SoundId.poweroff);
         state.grid.delete_latest_row();
     }
 
-    if (ray.isKeyPressed(ray.KeyboardKey.left)) {
+    // TODO create an input actions system
+    // TODO abstract this timeout logic
+    if ((ray.isKeyDown(Key.left) or ray.isKeyDown(Key.h)) and
+        input_state.move_left_timeout.elapsed)
+    {
+        input_state.move_left_timeout.reset();
         state.grid.move_selection(IVec2{ .x = -1, .y = 0 });
         sfx.play(SoundId.blip);
     }
-    if (ray.isKeyPressed(ray.KeyboardKey.right)) {
+    if ((ray.isKeyDown(Key.right) or ray.isKeyDown(Key.l)) and
+        input_state.move_right_timeout.elapsed)
+    {
+        input_state.move_right_timeout.reset();
         state.grid.move_selection(IVec2{ .x = 1, .y = 0 });
         sfx.play(SoundId.blip);
     }
-    if (ray.isKeyPressed(ray.KeyboardKey.up)) {
+    if ((ray.isKeyDown(Key.up) or ray.isKeyDown(Key.k)) and
+        input_state.move_up_timeout.elapsed)
+    {
+        input_state.move_up_timeout.reset();
         state.grid.move_selection(IVec2{ .x = 0, .y = -1 });
         sfx.play(SoundId.blip);
     }
-    if (ray.isKeyPressed(ray.KeyboardKey.down)) {
+    if ((ray.isKeyDown(Key.down) or ray.isKeyDown(Key.j)) and
+        input_state.move_down_timeout.elapsed)
+    {
+        input_state.move_down_timeout.reset();
         state.grid.move_selection(IVec2{ .x = 0, .y = 1 });
         sfx.play(SoundId.blip);
     }
 
-    if (ray.isKeyPressed(ray.KeyboardKey.q)) {
+    if (ray.isKeyPressed(Key.q)) {
         state.quit = true;
     }
 }
@@ -389,9 +469,27 @@ fn draw(state: State) void {
     state.grid.draw();
 }
 
+const InputState = struct {
+    // TODO make this start slow and speed up while held
+    const move_timeout_ms = 80;
+
+    move_left_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
+    move_right_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
+    move_up_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
+    move_down_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
+
+    fn tick_ns(self: *InputState, dt_ns: i128) void {
+        self.move_left_timeout.tick_ns(dt_ns);
+        self.move_right_timeout.tick_ns(dt_ns);
+        self.move_up_timeout.tick_ns(dt_ns);
+        self.move_down_timeout.tick_ns(dt_ns);
+    }
+};
+
 const State = struct {
     grid: OneTenGrid,
     quit: bool = false,
+    input_state: InputState = .{},
 
     alloc: Allocator,
 
@@ -433,8 +531,10 @@ pub fn oneten() !void {
         //////////////////////////////////////////////////
         // Main loop
         //////////////////////////////////////////////////
+        var delta_timer = DeltaTimer.init();
         while (!ray.windowShouldClose() and !state.quit) {
-            try handle_input(&state, sfx);
+            const dt_ns: i128 = delta_timer.lap_ns();
+            try handle_input(&state, sfx, dt_ns);
             draw(state);
         }
         sfx.play(SoundId.poweroff);
