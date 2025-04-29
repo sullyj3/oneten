@@ -355,17 +355,17 @@ const CountdownTimer = struct {
     }
 
     fn new_ms(duration_ms: i128) CountdownTimer {
-        return CountdownTimer.new(duration_ms * std.time.ns_per_ms);
+        return CountdownTimer.new(duration_ms * ns_per_ms);
     }
 
     fn new_elapsed_ms(duration_ms: i128) CountdownTimer {
-        var timer = CountdownTimer.new(duration_ms * std.time.ns_per_ms);
+        var timer = CountdownTimer.new(duration_ms * ns_per_ms);
         timer.elapsed = true;
         return timer;
     }
 
     fn new_s(duration_s: f64) CountdownTimer {
-        const ns_f: f64 = duration_s * @as(f64, @floatFromInt(std.time.ns_per_s));
+        const ns_f: f64 = duration_s * @as(f64, @floatFromInt(ns_per_s));
         return CountdownTimer.new(@intFromFloat(ns_f));
     }
 
