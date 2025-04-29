@@ -287,6 +287,12 @@ const OneTenGrid = struct {
 const WIN_WIDTH = 1080;
 const WIN_HEIGHT = 720;
 
+const SoundId = enum {
+    startup,
+    blip,
+    poweroff,
+};
+
 const Sfx = struct {
     startup: ?ray.Sound,
     blip: ?ray.Sound,
@@ -296,15 +302,24 @@ const Sfx = struct {
         return ray.loadSound(path) catch null;
     }
 
-    fn maybe_play(sound: ?ray.Sound) void {
+    fn get_sound_by_id(self: Sfx, sound_id: SoundId) ?ray.Sound {
+        return switch (sound_id) {
+            SoundId.startup => self.startup,
+            SoundId.blip => self.blip,
+            SoundId.poweroff => self.poweroff,
+        };
+    }
+
+    fn play(self: Sfx, sound_id: SoundId) void {
+        const sound = self.get_sound_by_id(sound_id);
         if (sound) |sound_| {
             ray.playSound(sound_);
         }
     }
 
-    fn is_sound_playing(sound: ?ray.Sound) bool {
-        return if (sound) |sound_|
-            ray.isSoundPlaying(sound_)
+    fn is_sound_playing(self: Sfx, sound_id: SoundId) bool {
+        return if (self.get_sound_by_id(sound_id)) |sound|
+            ray.isSoundPlaying(sound)
         else
             false;
     }
@@ -332,34 +347,34 @@ const Sfx = struct {
 
 fn handle_input(state: *State, sfx: Sfx) !void {
     if (ray.isKeyPressed(ray.KeyboardKey.space)) {
-        Sfx.maybe_play(sfx.blip);
+        sfx.play(SoundId.blip);
         state.grid.toggle_selection();
     }
 
     if (ray.isKeyPressed(ray.KeyboardKey.enter)) {
-        Sfx.maybe_play(sfx.blip);
+        sfx.play(SoundId.blip);
         try state.grid.append_step();
     }
     if (ray.isKeyPressed(ray.KeyboardKey.backspace)) {
-        Sfx.maybe_play(sfx.blip);
+        sfx.play(SoundId.blip);
         state.grid.delete_latest_row();
     }
 
     if (ray.isKeyPressed(ray.KeyboardKey.left)) {
         state.grid.move_selection(IVec2{ .x = -1, .y = 0 });
-        Sfx.maybe_play(sfx.blip);
+        sfx.play(SoundId.blip);
     }
     if (ray.isKeyPressed(ray.KeyboardKey.right)) {
         state.grid.move_selection(IVec2{ .x = 1, .y = 0 });
-        Sfx.maybe_play(sfx.blip);
+        sfx.play(SoundId.blip);
     }
     if (ray.isKeyPressed(ray.KeyboardKey.up)) {
         state.grid.move_selection(IVec2{ .x = 0, .y = -1 });
-        Sfx.maybe_play(sfx.blip);
+        sfx.play(SoundId.blip);
     }
     if (ray.isKeyPressed(ray.KeyboardKey.down)) {
         state.grid.move_selection(IVec2{ .x = 0, .y = 1 });
-        Sfx.maybe_play(sfx.blip);
+        sfx.play(SoundId.blip);
     }
 
     if (ray.isKeyPressed(ray.KeyboardKey.q)) {
@@ -396,7 +411,7 @@ const State = struct {
 pub fn oneten() !void {
     const sfx: Sfx = try Sfx.init();
     defer sfx.deinit();
-    Sfx.maybe_play(sfx.startup);
+    sfx.play(SoundId.startup);
 
     {
         const title = "OneTen";
@@ -419,8 +434,8 @@ pub fn oneten() !void {
         }
     }
 
-    Sfx.maybe_play(sfx.poweroff);
-    while (Sfx.is_sound_playing(sfx.poweroff)) {
+    sfx.play(SoundId.poweroff);
+    while (sfx.is_sound_playing(SoundId.poweroff)) {
         sleep(3 * ns_per_ms);
     }
 }
