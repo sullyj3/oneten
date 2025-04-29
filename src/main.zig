@@ -437,9 +437,9 @@ pub fn oneten() !void {
             try handle_input(&state, sfx);
             draw(state);
         }
+        sfx.play(SoundId.poweroff);
     }
 
-    sfx.play(SoundId.poweroff);
     while (sfx.is_sound_playing(SoundId.poweroff)) {
         sleep(3 * ns_per_ms);
     }
