@@ -279,7 +279,9 @@ const OneTenGrid = struct {
         } else if (self.rows.pop()) |last| {
             self.alloc.free(last);
             // ensure selection remains in new smaller bounds
-            self.move_selection(.{ .x = 0, .y = -1 });
+            if (self.selection.y >= self.n_rows()) {
+                self.move_selection(.{ .x = 0, .y = -1 });
+            }
         }
     }
 };
