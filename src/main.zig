@@ -288,16 +288,33 @@ const WIN_WIDTH = 1080;
 const WIN_HEIGHT = 720;
 
 const Sfx = struct {
-    startup: ray.Sound,
-    blip: ray.Sound,
-    poweroff: ray.Sound,
+    startup: ?ray.Sound,
+    blip: ?ray.Sound,
+    poweroff: ?ray.Sound,
+
+    fn maybe_load_sound(path: [:0]const u8) ?ray.Sound {
+        return ray.loadSound(path) catch null;
+    }
+
+    fn maybe_play(sound: ?ray.Sound) void {
+        if (sound) |sound_| {
+            ray.playSound(sound_);
+        }
+    }
+
+    fn is_sound_playing(sound: ?ray.Sound) bool {
+        return if (sound) |sound_|
+            ray.isSoundPlaying(sound_)
+        else
+            false;
+    }
 
     fn init() ray.RaylibError!Sfx {
         ray.initAudioDevice();
 
-        const startup: ray.Sound = try ray.loadSound("res/startup.wav");
-        const blip: ray.Sound = try ray.loadSound("res/blip.wav");
-        const poweroff: ray.Sound = try ray.loadSound("res/poweroff.wav");
+        const startup = Sfx.maybe_load_sound("res/startup.wav");
+        const blip = Sfx.maybe_load_sound("res/blip.wav");
+        const poweroff = Sfx.maybe_load_sound("res/poweroff.wav");
         return Sfx{
             .startup = startup,
             .blip = blip,
@@ -306,43 +323,43 @@ const Sfx = struct {
     }
 
     fn deinit(self: *const Sfx) void {
-        ray.unloadSound(self.startup);
-        ray.unloadSound(self.blip);
-        ray.unloadSound(self.poweroff);
+        if (self.startup) |s| ray.unloadSound(s);
+        if (self.blip) |s| ray.unloadSound(s);
+        if (self.poweroff) |s| ray.unloadSound(s);
         ray.closeAudioDevice();
     }
 };
 
 fn handle_input(state: *State, sfx: Sfx) !void {
     if (ray.isKeyPressed(ray.KeyboardKey.space)) {
-        ray.playSound(sfx.blip);
+        Sfx.maybe_play(sfx.blip);
         state.grid.toggle_selection();
     }
 
     if (ray.isKeyPressed(ray.KeyboardKey.enter)) {
-        ray.playSound(sfx.blip);
+        Sfx.maybe_play(sfx.blip);
         try state.grid.append_step();
     }
     if (ray.isKeyPressed(ray.KeyboardKey.backspace)) {
-        ray.playSound(sfx.blip);
+        Sfx.maybe_play(sfx.blip);
         state.grid.delete_latest_row();
     }
 
     if (ray.isKeyPressed(ray.KeyboardKey.left)) {
         state.grid.move_selection(IVec2{ .x = -1, .y = 0 });
-        ray.playSound(sfx.blip);
+        Sfx.maybe_play(sfx.blip);
     }
     if (ray.isKeyPressed(ray.KeyboardKey.right)) {
         state.grid.move_selection(IVec2{ .x = 1, .y = 0 });
-        ray.playSound(sfx.blip);
+        Sfx.maybe_play(sfx.blip);
     }
     if (ray.isKeyPressed(ray.KeyboardKey.up)) {
         state.grid.move_selection(IVec2{ .x = 0, .y = -1 });
-        ray.playSound(sfx.blip);
+        Sfx.maybe_play(sfx.blip);
     }
     if (ray.isKeyPressed(ray.KeyboardKey.down)) {
         state.grid.move_selection(IVec2{ .x = 0, .y = 1 });
-        ray.playSound(sfx.blip);
+        Sfx.maybe_play(sfx.blip);
     }
 
     if (ray.isKeyPressed(ray.KeyboardKey.q)) {
@@ -377,9 +394,9 @@ const State = struct {
 };
 
 pub fn oneten() !void {
-    const sfx = try Sfx.init();
+    const sfx: Sfx = try Sfx.init();
     defer sfx.deinit();
-    ray.playSound(sfx.startup);
+    Sfx.maybe_play(sfx.startup);
 
     {
         const title = "OneTen";
@@ -402,8 +419,8 @@ pub fn oneten() !void {
         }
     }
 
-    ray.playSound(sfx.poweroff);
-    while (ray.isSoundPlaying(sfx.poweroff)) {
+    Sfx.maybe_play(sfx.poweroff);
+    while (Sfx.is_sound_playing(sfx.poweroff)) {
         sleep(3 * ns_per_ms);
     }
 }
