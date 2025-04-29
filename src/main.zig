@@ -16,6 +16,7 @@ const CELL_BORDER_WIDTH = 2;
 
 const BG_COLOR = ray.SKYBLUE;
 const FG_COLOR = ray.DARKBLUE;
+const SEL_COLOR = ray.GREEN;
 
 fn draw_cell(on: bool, x: i32, y: i32) void {
     const rect: ray.Rectangle = .{
@@ -101,10 +102,58 @@ fn sim_step_110(alloc: Allocator, in_row: []bool) ![]bool {
 
 const ArrayListUM = std.ArrayListUnmanaged;
 
+const UVec2 = struct {
+    x: u32,
+    y: u32,
+
+    fn mul_pointwise(self: UVec2, other: UVec2) UVec2 {
+        return .{
+            .x = self.x * other.x,
+            .y = self.y * other.y,
+        };
+    }
+};
+
+const IVec2 = struct {
+    x: i32,
+    y: i32,
+
+    fn mul_pointwise(self: IVec2, other: IVec2) IVec2 {
+        return .{
+            .x = self.x * other.x,
+            .y = self.y * other.y,
+        };
+    }
+
+    fn plus(self: IVec2, other: IVec2) IVec2 {
+        return .{
+            .x = self.x + other.x,
+            .y = self.y + other.y,
+        };
+    }
+
+    fn plusU(self: IVec2, other: UVec2) IVec2 {
+        return .{
+            .x = self.x + @as(i32, @intCast(other.x)),
+            .y = self.y + @as(i32, @intCast(other.y)),
+        };
+    }
+};
+
+fn cell_to_screen_offset(cell: UVec2) UVec2 {
+    return cell.mul_pointwise(.{
+        .x = CELL_SIDE + CELL_GAP,
+        .y = CELL_SIDE + CELL_GAP,
+    });
+}
+
 // rows are owned by the grid
 const OneTenGrid = struct {
     rows: ArrayListUM([]bool),
     row_width: usize,
+
+    // y down, so y=0 is the top
+    selection: UVec2,
 
     alloc: Allocator,
 
@@ -120,6 +169,10 @@ const OneTenGrid = struct {
         return .{
             .rows = rows,
             .row_width = initial_state.len,
+            .selection = .{
+                .x = @truncate(n_cells - 1),
+                .y = 0,
+            },
             .alloc = alloc,
         };
     }
@@ -157,6 +210,20 @@ const OneTenGrid = struct {
             const y_offs: i32 = @intCast(i * (CELL_SIDE + CELL_GAP));
             draw_cell_row(row, cells_x, cells_y + y_offs);
         }
+
+        // draw selection
+        const sel = (IVec2{
+            .x = cells_x,
+            .y = cells_y,
+        }).plusU(cell_to_screen_offset(self.selection));
+        const rect: ray.Rectangle = .{
+            .x = @floatFromInt(sel.x),
+            .y = @floatFromInt(sel.y),
+            .width = CELL_SIDE,
+            .height = CELL_SIDE,
+        };
+
+        ray.DrawRectangleLinesEx(rect, CELL_BORDER_WIDTH, SEL_COLOR);
     }
 
     fn draw_grid_bg(self: OneTenGrid, cx: i32, cy: i32) void {
