@@ -267,8 +267,12 @@ const OneTenGrid = struct {
         self.selection.y = @intCast(y);
     }
 
+    fn selection_ptr(self: OneTenGrid) *bool {
+        return &self.rows.items[self.selection.y][self.selection.x];
+    }
+
     fn toggle_selection(self: *OneTenGrid) void {
-        const ptr: *bool = &self.rows.items[self.selection.y][self.selection.x];
+        const ptr: *bool = self.selection_ptr();
         ptr.* = !ptr.*;
     }
 
