@@ -255,6 +255,22 @@ const OneTenGrid = struct {
         };
         ray.DrawRectangleLinesEx(rect, GRID_BORDER_THICKNESS, FG_COLOR);
     }
+
+    fn move_selection(self: *OneTenGrid, offs: IVec2) void {
+        var x: i64 = @as(i64, self.selection.x) + offs.x;
+        var y: i64 = @as(i64, self.selection.y) + offs.y;
+
+        x = @mod(x, @as(i64, @intCast(self.row_width)));
+        y = @mod(y, @as(i64, @intCast(self.n_rows())));
+
+        self.selection.x = @intCast(x);
+        self.selection.y = @intCast(y);
+    }
+
+    fn toggle_selection(self: *OneTenGrid) void {
+        const ptr: *bool = &self.rows.items[self.selection.y][self.selection.x];
+        ptr.* = !ptr.*;
+    }
 };
 
 const WIN_WIDTH = 1080;
@@ -287,7 +303,29 @@ const Sfx = struct {
 fn handle_input(state: *State, sfx: Sfx) !void {
     if (ray.IsKeyPressed(ray.KEY_SPACE)) {
         ray.PlaySound(sfx.blip);
+        state.grid.toggle_selection();
+    }
+
+    if (ray.IsKeyPressed(ray.KEY_ENTER)) {
+        ray.PlaySound(sfx.blip);
         try state.grid.append_step();
+    }
+
+    if (ray.IsKeyPressed(ray.KEY_LEFT)) {
+        state.grid.move_selection(IVec2{ .x = -1, .y = 0 });
+        ray.PlaySound(sfx.blip);
+    }
+    if (ray.IsKeyPressed(ray.KEY_RIGHT)) {
+        state.grid.move_selection(IVec2{ .x = 1, .y = 0 });
+        ray.PlaySound(sfx.blip);
+    }
+    if (ray.IsKeyPressed(ray.KEY_UP)) {
+        state.grid.move_selection(IVec2{ .x = 0, .y = -1 });
+        ray.PlaySound(sfx.blip);
+    }
+    if (ray.IsKeyPressed(ray.KEY_DOWN)) {
+        state.grid.move_selection(IVec2{ .x = 0, .y = 1 });
+        ray.PlaySound(sfx.blip);
     }
 
     if (ray.IsKeyPressed(ray.KEY_Q)) {
