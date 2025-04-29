@@ -4,12 +4,8 @@ A graphical implementation of the [Rule 110 cellular automaton](https://en.wikip
 
 ![An image of a purple rectangular grid showing the first few steps of the evolution of rule 110](screenshot.png)
 
-## Requirements
+## Build Requirements
 
-Raylib must be installed. Eg. on arch:
+Raylib 5.5.
 
-```bash
-$ sudo pacman -S raylib
-```
-
-(Todo: link dependencies statically)
+place libraylib.a in ./cdeps/libraylib.a

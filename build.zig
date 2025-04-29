@@ -64,9 +64,18 @@ pub fn build(b: *std.Build) void {
         .name = "oneten",
         .root_module = exe_mod,
     });
+
+    exe.addIncludePath(.{ .src_path = .{
+        .owner = b,
+        .sub_path = "include",
+    } });
+    exe.addObjectFile(.{ .src_path = .{
+        .owner = b,
+        .sub_path = "cdeps/libraylib.a",
+    } });
+
     // for raylib
     exe.linkLibC();
-    exe.linkSystemLibrary("raylib");
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
