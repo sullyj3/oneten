@@ -326,7 +326,7 @@ const Sfx = struct {
             false;
     }
 
-    fn init() ray.RaylibError!Sfx {
+    fn init() Sfx {
         ray.initAudioDevice();
 
         const startup = Sfx.maybe_load_sound("res/startup.wav");
@@ -509,7 +509,7 @@ const State = struct {
 };
 
 pub fn oneten() !void {
-    const sfx: Sfx = try Sfx.init();
+    const sfx: Sfx = Sfx.init();
     defer sfx.deinit();
     sfx.play(SoundId.startup);
 
