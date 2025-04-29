@@ -38,21 +38,12 @@ fn draw_cell_row(cell_states: []bool, x: i32, y: i32) void {
     }
 }
 
-fn cells_draw_width(n_cells: usize) u32 {
-    return @intCast(n_cells * CELL_SIDE + (n_cells - 1) * CELL_GAP);
-}
-
-fn top_left_from_center(
-    cx: i32,
-    cy: i32,
-    width: u32,
-    height: u32,
-) struct { i32, i32 } {
-    const half_width: i32 = @intCast(width / 2);
-    const half_height: i32 = @intCast(height / 2);
+fn top_left_from_center(center: IVec2, dimensions: UVec2) IVec2 {
+    const half_width: i32 = @intCast(dimensions.x / 2);
+    const half_height: i32 = @intCast(dimensions.y / 2);
     return .{
-        cx - half_width,
-        cy - half_height,
+        .x = center.x - half_width,
+        .y = center.y - half_height,
     };
 }
 
@@ -123,17 +114,15 @@ const IVec2 = struct {
     y: i32 = 0,
 
     fn mul_pointwise(self: IVec2, other: IVec2) IVec2 {
-        return .{
-            .x = self.x * other.x,
-            .y = self.y * other.y,
-        };
+        return .{ .x = self.x * other.x, .y = self.y * other.y };
     }
 
     fn plus(self: IVec2, other: IVec2) IVec2 {
-        return .{
-            .x = self.x + other.x,
-            .y = self.y + other.y,
-        };
+        return .{ .x = self.x + other.x, .y = self.y + other.y };
+    }
+
+    fn minus(self: IVec2, other: IVec2) IVec2 {
+        return .{ .x = self.x - other.x, .y = self.y - other.y };
     }
 
     fn plusU(self: IVec2, other: UVec2) IVec2 {
@@ -201,26 +190,21 @@ const OneTenGrid = struct {
     const GRID_PADDING = 20;
 
     fn draw(self: OneTenGrid) void {
-        const cx: i32 = WIN_WIDTH / 2;
-        const cy: i32 = WIN_HEIGHT / 2;
-
-        const cells_x: i32, const cells_y: i32 = top_left_from_center(
-            cx,
-            cy,
-            cells_draw_width(self.row_width),
-            cells_draw_width(self.rows.items.len),
-        );
-
-        self.draw_grid_bg(cells_x - GRID_PADDING, cells_y - GRID_PADDING);
+        const win_center = IVec2{ .x = WIN_WIDTH / 2, .y = WIN_HEIGHT / 2 };
+        const cells_dims = self.cells_dimensions();
+        const cells_pos = top_left_from_center(win_center, cells_dims);
+        const border_dims = OneTenGrid.border_dimensions(cells_dims);
+        const border_pos = cells_pos.minus(.{ .x = GRID_PADDING, .y = GRID_PADDING });
+        OneTenGrid.draw_grid_bg(border_pos, border_dims);
         for (self.rows.items, 0..) |row, i| {
             const y_offs: i32 = @intCast(i * (CELL_SIDE + CELL_GAP));
-            draw_cell_row(row, cells_x, cells_y + y_offs);
+            draw_cell_row(row, cells_pos.x, cells_pos.y + y_offs);
         }
 
         // draw selection
         const sel = (IVec2{
-            .x = cells_x,
-            .y = cells_y,
+            .x = cells_pos.x,
+            .y = cells_pos.y,
         }).plusU(cell_to_screen_offset(self.selection));
         const rect: ray.Rectangle = .{
             .x = @floatFromInt(sel.x),
@@ -236,10 +220,8 @@ const OneTenGrid = struct {
         const row_width: u32 = @truncate(self.row_width);
         const n_rows_u: u32 = @truncate(self.n_rows());
 
-        const width: u32 = row_width * CELL_SIDE +
-            (row_width - 1) * CELL_GAP;
-        const height: u32 = n_rows_u * CELL_SIDE +
-            (n_rows_u - 1) * CELL_GAP;
+        const width: u32 = row_width * CELL_SIDE + (row_width - 1) * CELL_GAP;
+        const height: u32 = n_rows_u * CELL_SIDE + (n_rows_u - 1) * CELL_GAP;
 
         return .{
             .x = width,
@@ -254,13 +236,11 @@ const OneTenGrid = struct {
         });
     }
 
-    fn draw_grid_bg(self: OneTenGrid, x: i32, y: i32) void {
+    fn draw_grid_bg(position: IVec2, dimensions: UVec2) void {
         const GRID_BORDER_THICKNESS = 5;
-        const dimensions = OneTenGrid.border_dimensions(self.cells_dimensions());
-
         const rect: ray.Rectangle = .{
-            .x = @floatFromInt(x),
-            .y = @floatFromInt(y),
+            .x = @floatFromInt(position.x),
+            .y = @floatFromInt(position.y),
             .width = @floatFromInt(dimensions.x),
             .height = @floatFromInt(dimensions.y),
         };
