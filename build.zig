@@ -65,14 +65,8 @@ pub fn build(b: *std.Build) void {
         .root_module = exe_mod,
     });
 
-    exe.addIncludePath(.{ .src_path = .{
-        .owner = b,
-        .sub_path = "include",
-    } });
-    exe.addObjectFile(.{ .src_path = .{
-        .owner = b,
-        .sub_path = "cdeps/libraylib.a",
-    } });
+    exe.addIncludePath(b.path("include"));
+    exe.addObjectFile(b.path("cdeps/libraylib.a"));
 
     // for raylib
     exe.linkLibC();
