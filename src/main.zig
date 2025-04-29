@@ -281,6 +281,8 @@ const OneTenGrid = struct {
             return;
         } else if (self.rows.pop()) |last| {
             self.alloc.free(last);
+            // ensure selection remains in new smaller bounds
+            self.move_selection(.{ .x = 0, .y = -1 });
         }
     }
 };
