@@ -112,8 +112,8 @@ const UVec2 = struct {
 };
 
 const IVec2 = struct {
-    x: i32,
-    y: i32,
+    x: i32 = 0,
+    y: i32 = 0,
 
     fn mul_pointwise(self: IVec2, other: IVec2) IVec2 {
         return .{
@@ -422,6 +422,7 @@ fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) !void {
     if (ray.isKeyPressed(Key.enter)) {
         sfx.play(SoundId.blip);
         try state.grid.append_step();
+        state.grid.move_selection(.{ .y = 1 });
     }
     if (ray.isKeyPressed(Key.backspace)) {
         sfx.play(SoundId.poweroff);
