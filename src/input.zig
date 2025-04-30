@@ -1,0 +1,64 @@
+const ray = @import("raylib");
+
+const State = @import("state.zig").State;
+const Sfx = @import("sfx.zig").Sfx;
+const SoundId = @import("sfx.zig").SoundId;
+
+const intvecs = @import("intvecs.zig");
+const IVec2 = intvecs.IVec2;
+
+pub fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) !void {
+    state.input_state.tick_ns(dt_ns);
+    const input_state = &state.input_state;
+
+    const Key = ray.KeyboardKey;
+    if (ray.isKeyPressed(Key.space)) {
+        sfx.play(SoundId.blip);
+        state.grid.toggle_selection();
+    }
+
+    if (ray.isKeyPressed(Key.enter)) {
+        sfx.play(SoundId.blip);
+        try state.grid.append_step();
+        state.grid.move_selection(.{ .y = 1 });
+    }
+    if (ray.isKeyPressed(Key.backspace)) {
+        sfx.play(SoundId.poweroff);
+        state.grid.delete_latest_row();
+    }
+
+    // TODO create an input actions system
+    // TODO abstract this timeout logic
+    if ((ray.isKeyDown(Key.left) or ray.isKeyDown(Key.h)) and
+        input_state.move_left_timeout.elapsed)
+    {
+        input_state.move_left_timeout.reset();
+        state.grid.move_selection(IVec2{ .x = -1, .y = 0 });
+        sfx.play(SoundId.blip);
+    }
+    if ((ray.isKeyDown(Key.right) or ray.isKeyDown(Key.l)) and
+        input_state.move_right_timeout.elapsed)
+    {
+        input_state.move_right_timeout.reset();
+        state.grid.move_selection(IVec2{ .x = 1, .y = 0 });
+        sfx.play(SoundId.blip);
+    }
+    if ((ray.isKeyDown(Key.up) or ray.isKeyDown(Key.k)) and
+        input_state.move_up_timeout.elapsed)
+    {
+        input_state.move_up_timeout.reset();
+        state.grid.move_selection(IVec2{ .x = 0, .y = -1 });
+        sfx.play(SoundId.blip);
+    }
+    if ((ray.isKeyDown(Key.down) or ray.isKeyDown(Key.j)) and
+        input_state.move_down_timeout.elapsed)
+    {
+        input_state.move_down_timeout.reset();
+        state.grid.move_selection(IVec2{ .x = 0, .y = 1 });
+        sfx.play(SoundId.blip);
+    }
+
+    if (ray.isKeyPressed(Key.q)) {
+        state.quit = true;
+    }
+}
