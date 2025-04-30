@@ -1,3 +1,4 @@
+const std = @import("std");
 const ray = @import("raylib");
 
 const Sfx = @This();
@@ -36,6 +37,12 @@ pub fn is_sound_playing(self: Sfx, sound_id: SoundId) bool {
         ray.isSoundPlaying(sound)
     else
         false;
+}
+
+pub fn sleep_til_finished(self: Sfx, sound_id: SoundId, poll_interval_ms: u64) void {
+    while (self.is_sound_playing(sound_id)) {
+        std.time.sleep(poll_interval_ms * std.time.ns_per_ms);
+    }
 }
 
 pub fn init() Sfx {

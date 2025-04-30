@@ -1,7 +1,5 @@
 // std
 const std = @import("std");
-const sleep = std.time.sleep;
-const ns_per_ms = std.time.ns_per_ms;
 
 // third party
 const ray = @import("raylib");
@@ -41,10 +39,7 @@ pub fn oneten() !void {
         }
         sfx.play(.poweroff);
     }
-
-    while (sfx.is_sound_playing(.poweroff)) {
-        sleep(3 * ns_per_ms);
-    }
+    sfx.sleep_til_finished(.poweroff, 3);
 }
 
 pub fn main() !void {
