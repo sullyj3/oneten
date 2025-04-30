@@ -18,14 +18,19 @@ pub fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) !void {
         state.grid.toggle_selection();
     }
 
-    if (ray.isKeyPressed(Key.enter)) {
+    if (ray.isKeyPressed(Key.enter) or ray.isKeyPressed(Key.o)) {
         sfx.play(.startup);
         try state.grid.append_step();
         state.grid.move_selection(.{ .y = 1 });
     }
-    if (ray.isKeyPressed(Key.backspace)) {
+    if (ray.isKeyPressed(Key.backspace) or ray.isKeyPressed(Key.d)) {
         sfx.play(.poweroff);
         state.grid.delete_latest_row();
+    }
+
+    if (ray.isKeyPressed(Key.r)) {
+        sfx.play(.poweroff);
+        try state.grid.reset();
     }
 
     // TODO create an input actions system. this module should just parse input

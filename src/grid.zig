@@ -84,6 +84,15 @@ pub const OneTenGrid = struct {
         self.rows.deinit(self.alloc);
     }
 
+    pub fn reset(self: *OneTenGrid) !void {
+        const alloc = self.alloc;
+        const n_cells = self.row_width;
+
+        // this is obviously suboptimal, but unlikely to become too slow
+        self.deinit();
+        self.* = try OneTenGrid.init(alloc, n_cells);
+    }
+
     pub fn append_step(self: *OneTenGrid) !void {
         const prev: []bool = self.rows.getLast();
         const next: []bool = try sim_step_110(self.alloc, prev);
