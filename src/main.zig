@@ -7,46 +7,6 @@ const sleep = std.time.sleep;
 const ns_per_s = std.time.ns_per_s;
 const ns_per_ms = std.time.ns_per_ms;
 
-const CELL_SIDE = 35;
-const CELL_GAP = 4;
-const CELL_BORDER_WIDTH = 2;
-
-const BG_COLOR = ray.Color.sky_blue;
-const FG_COLOR = ray.Color.dark_blue;
-const SEL_COLOR = ray.Color.green;
-
-fn draw_cell(on: bool, x: i32, y: i32) void {
-    const rect: ray.Rectangle = .{
-        .x = @floatFromInt(x),
-        .y = @floatFromInt(y),
-        .width = CELL_SIDE,
-        .height = CELL_SIDE,
-    };
-
-    if (on) {
-        ray.drawRectangleRec(rect, FG_COLOR);
-    } else {
-        ray.drawRectangleLinesEx(rect, CELL_BORDER_WIDTH, FG_COLOR);
-    }
-}
-
-fn draw_cell_row(cell_states: []bool, x: i32, y: i32) void {
-    var x_offs: i32 = 0;
-    for (cell_states) |cell| {
-        draw_cell(cell, x + x_offs, y);
-        x_offs += CELL_SIDE + CELL_GAP;
-    }
-}
-
-fn top_left_from_center(center: IVec2, dimensions: UVec2) IVec2 {
-    const half_width: i32 = @intCast(dimensions.x / 2);
-    const half_height: i32 = @intCast(dimensions.y / 2);
-    return .{
-        .x = center.x - half_width,
-        .y = center.y - half_height,
-    };
-}
-
 /// trip_code summarizes the prior state of the 3 cells centered on the index
 /// whose new value we want to calculate
 fn rule_110(triplet: []const bool) bool {
@@ -133,11 +93,51 @@ const IVec2 = struct {
     }
 };
 
+const CELL_SIDE = 35;
+const CELL_GAP = 4;
+const CELL_BORDER_WIDTH = 2;
+
+const BG_COLOR = ray.Color.sky_blue;
+const FG_COLOR = ray.Color.dark_blue;
+const SEL_COLOR = ray.Color.green;
+
 fn cell_to_screen_offset(cell: UVec2) UVec2 {
     return cell.mul_pointwise(.{
         .x = CELL_SIDE + CELL_GAP,
         .y = CELL_SIDE + CELL_GAP,
     });
+}
+
+fn draw_cell(on: bool, x: i32, y: i32) void {
+    const rect: ray.Rectangle = .{
+        .x = @floatFromInt(x),
+        .y = @floatFromInt(y),
+        .width = CELL_SIDE,
+        .height = CELL_SIDE,
+    };
+
+    if (on) {
+        ray.drawRectangleRec(rect, FG_COLOR);
+    } else {
+        ray.drawRectangleLinesEx(rect, CELL_BORDER_WIDTH, FG_COLOR);
+    }
+}
+
+fn draw_cell_row(cell_states: []bool, x: i32, y: i32) void {
+    var x_offs: i32 = 0;
+    for (cell_states) |cell| {
+        draw_cell(cell, x + x_offs, y);
+        x_offs += CELL_SIDE + CELL_GAP;
+    }
+}
+
+fn top_left_from_center(center: IVec2, dimensions: UVec2) IVec2 {
+    const half_width: i32 = @intCast(dimensions.x / 2);
+    const half_height: i32 = @intCast(dimensions.y / 2);
+    return .{
+        .x = center.x - half_width,
+        .y = center.y - half_height,
+    };
 }
 
 // rows are owned by the grid
