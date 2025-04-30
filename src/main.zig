@@ -12,13 +12,15 @@ const Sfx = @import("sfx.zig");
 
 const AppCtx = struct {
     const MAX_EXE_DIR_PATH_LEN = 256;
-    exe_dir: [MAX_EXE_DIR_PATH_LEN]u8 = undefined,
+    exe_dir_buf: [MAX_EXE_DIR_PATH_LEN]u8 = undefined,
+    exe_dir: []const u8,
     sfx: Sfx,
 
     fn init() !AppCtx {
         var ctx: AppCtx = undefined;
-        _ = try std.fs.selfExeDirPath(&ctx.exe_dir);
-        ctx.sfx = Sfx.init();
+        ctx.exe_dir = try std.fs.selfExeDirPath(&ctx.exe_dir_buf);
+        std.debug.print("exe_dir: {s}\n", .{ctx.exe_dir});
+        ctx.sfx = try Sfx.init(ctx.exe_dir);
 
         return ctx;
     }

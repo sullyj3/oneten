@@ -3,6 +3,8 @@ const ray = @import("raylib");
 
 const Sfx = @This();
 
+const Allocator = std.mem.Allocator;
+
 pub const SoundId = enum {
     startup,
     blip,
@@ -45,13 +47,27 @@ pub fn sleep_til_finished(self: Sfx, sound_id: SoundId, poll_interval_ms: u64) v
     }
 }
 
-pub fn init() Sfx {
+pub fn init(exe_path: []const u8) !Sfx {
     ray.initAudioDevice();
+    var buf: [4096]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buf);
+    const alloc = fba.allocator();
 
-    const startup = maybe_load_sound("res/startup.wav");
-    const blip = maybe_load_sound("res/blip.wav");
-    const poweroff = maybe_load_sound("res/poweroff.wav");
-    const plip = maybe_load_sound("res/plip.wav");
+    // relative to ./zig-out/bin
+    // TODO possibly the res folder should get copied to zig-out?
+    // maybe the sounds should be included in the binary? need to research the best approach
+    const res_path_rel = "../../res";
+    const res_path_abs = try std.fs.path.joinZ(alloc, &.{ exe_path, res_path_rel });
+
+    const startup_path = try std.fs.path.joinZ(alloc, &.{ res_path_abs, "startup.wav" });
+    const blip_path = try std.fs.path.joinZ(alloc, &.{ res_path_abs, "blip.wav" });
+    const poweroff_path = try std.fs.path.joinZ(alloc, &.{ res_path_abs, "poweroff.wav" });
+    const plip_path = try std.fs.path.joinZ(alloc, &.{ res_path_abs, "plip.wav" });
+
+    const startup = maybe_load_sound(startup_path);
+    const blip = maybe_load_sound(blip_path);
+    const poweroff = maybe_load_sound(poweroff_path);
+    const plip = maybe_load_sound(plip_path);
 
     return Sfx{
         .startup = startup,
