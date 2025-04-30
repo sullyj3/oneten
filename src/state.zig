@@ -46,29 +46,6 @@ const CountdownTimer = struct {
     }
 };
 
-const DeltaTimer = struct {
-    last_ns: i128,
-
-    pub fn init() DeltaTimer {
-        return .{ .last_ns = std.time.nanoTimestamp() };
-    }
-
-    // return time in nanoseconds since init or last lap call
-    pub fn lap_ns(self: *DeltaTimer) i128 {
-        const now_ns = std.time.nanoTimestamp();
-        const dt_ns = now_ns - self.last_ns;
-        self.last_ns = now_ns;
-        return dt_ns;
-    }
-
-    // return time in seconds since init or last lap call
-    pub fn lap_s(self: *DeltaTimer) f32 {
-        const NS_IN_S = 1_000_000_000;
-        const dt_ns = self.lap_ns();
-        return @as(f32, @floatFromInt(dt_ns)) / NS_IN_S;
-    }
-};
-
 // TODO: design: it feels weird for this to be here instead of in input.zig,
 // but if it was there it would be a circular dependency, since we keep an InputState in State
 const InputState = struct {
@@ -91,7 +68,7 @@ const InputState = struct {
 pub const State = struct {
     grid: OneTenGrid,
     quit: bool = false,
-    delta_timer: DeltaTimer,
+    delta_timer: std.time.Timer,
     input_state: InputState = .{},
 
     alloc: Allocator,
@@ -103,7 +80,7 @@ pub const State = struct {
 
         return .{
             .grid = grid,
-            .delta_timer = DeltaTimer.init(),
+            .delta_timer = try std.time.Timer.start(),
             .alloc = alloc,
         };
     }

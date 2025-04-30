@@ -33,7 +33,7 @@ pub fn oneten() !void {
         defer state.deinit();
 
         while (!ray.windowShouldClose() and !state.quit) {
-            const dt_ns: i128 = state.delta_timer.lap_ns();
+            const dt_ns: i128 = state.delta_timer.lap();
             try input.handle_input(&state, sfx, dt_ns);
             draw.draw(state);
         }
