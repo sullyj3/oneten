@@ -10,10 +10,27 @@ const draw = @import("draw.zig");
 const State = @import("state.zig").State;
 const Sfx = @import("sfx.zig");
 
+const AppCtx = struct {
+    const MAX_EXE_DIR_PATH_LEN = 256;
+    exe_dir: [MAX_EXE_DIR_PATH_LEN]u8 = undefined,
+    sfx: Sfx,
+
+    fn init() !AppCtx {
+        var ctx: AppCtx = undefined;
+        _ = try std.fs.selfExeDirPath(&ctx.exe_dir);
+        ctx.sfx = Sfx.init();
+
+        return ctx;
+    }
+
+    fn deinit(self: *AppCtx) void {
+        self.sfx.deinit();
+    }
+};
+
 pub fn oneten() !void {
-    const sfx: Sfx = Sfx.init();
-    defer sfx.deinit();
-    sfx.play(.startup);
+    const ctx: AppCtx = try AppCtx.init();
+    ctx.sfx.play(.startup);
 
     {
         ray.setConfigFlags(.{
@@ -34,12 +51,12 @@ pub fn oneten() !void {
 
         while (!ray.windowShouldClose() and !state.quit) {
             const dt_ns: i128 = state.delta_timer.lap();
-            try input.handle_input(&state, sfx, dt_ns);
+            try input.handle_input(&state, ctx.sfx, dt_ns);
             draw.draw(state);
         }
-        sfx.play(.poweroff);
+        ctx.sfx.play(.poweroff);
     }
-    sfx.sleep_til_finished(.poweroff, 3);
+    ctx.sfx.sleep_til_finished(.poweroff, 3);
 }
 
 pub fn main() !void {
