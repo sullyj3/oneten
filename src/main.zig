@@ -188,13 +188,18 @@ const OneTenGrid = struct {
     }
 
     const GRID_PADDING = 20;
+    const WIN_PADDING = 20;
 
     fn draw(self: OneTenGrid) void {
+        // todo get a proper layout algorithm this is already a bit fucked
         const win_center = IVec2{ .x = WIN_WIDTH / 2, .y = WIN_HEIGHT / 2 };
         const cells_dims = self.cells_dimensions();
-        const cells_pos = top_left_from_center(win_center, cells_dims);
         const border_dims = OneTenGrid.border_dimensions(cells_dims);
-        const border_pos = cells_pos.minus(.{ .x = GRID_PADDING, .y = GRID_PADDING });
+        var cells_pos = top_left_from_center(win_center, cells_dims);
+        var border_pos = cells_pos.minus(.{ .x = GRID_PADDING, .y = GRID_PADDING });
+        const border_max_y: i32 = WIN_HEIGHT - WIN_PADDING - @as(i32, @intCast(border_dims.y));
+        border_pos.y = @min(border_pos.y, border_max_y);
+        cells_pos.y = border_pos.y + GRID_PADDING;
         OneTenGrid.draw_grid_bg(border_pos, border_dims);
         for (self.rows.items, 0..) |row, i| {
             const y_offs: i32 = @intCast(i * (CELL_SIDE + CELL_GAP));
