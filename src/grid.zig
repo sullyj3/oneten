@@ -2,8 +2,6 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayListUM = std.ArrayListUnmanaged;
 
-const ray = @import("raylib");
-
 const intvecs = @import("intvecs.zig");
 const UVec2 = intvecs.UVec2;
 const IVec2 = intvecs.IVec2;

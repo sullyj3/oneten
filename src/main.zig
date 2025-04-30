@@ -1,8 +1,6 @@
 // std
 const std = @import("std");
-const Allocator = std.mem.Allocator;
 const sleep = std.time.sleep;
-const ns_per_s = std.time.ns_per_s;
 const ns_per_ms = std.time.ns_per_ms;
 
 // third party
@@ -11,8 +9,6 @@ const ray = @import("raylib");
 // first party
 const input = @import("input.zig");
 const draw = @import("draw.zig");
-const intvecs = @import("intvecs.zig");
-const IVec2 = intvecs.IVec2;
 const State = @import("state.zig").State;
 const Sfx = @import("sfx.zig").Sfx;
 const SoundId = @import("sfx.zig").SoundId;

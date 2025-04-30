@@ -1,4 +1,3 @@
-const std = @import("std");
 const ray = @import("raylib");
 
 const State = @import("state.zig").State;
