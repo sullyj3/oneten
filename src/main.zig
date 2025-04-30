@@ -11,12 +11,11 @@ const input = @import("input.zig");
 const draw = @import("draw.zig");
 const State = @import("state.zig").State;
 const Sfx = @import("sfx.zig").Sfx;
-const SoundId = @import("sfx.zig").SoundId;
 
 pub fn oneten() !void {
     const sfx: Sfx = Sfx.init();
     defer sfx.deinit();
-    sfx.play(SoundId.startup);
+    sfx.play(.startup);
 
     {
         ray.setConfigFlags(.{
@@ -40,10 +39,10 @@ pub fn oneten() !void {
             try input.handle_input(&state, sfx, dt_ns);
             draw.draw(state);
         }
-        sfx.play(SoundId.poweroff);
+        sfx.play(.poweroff);
     }
 
-    while (sfx.is_sound_playing(SoundId.poweroff)) {
+    while (sfx.is_sound_playing(.poweroff)) {
         sleep(3 * ns_per_ms);
     }
 }

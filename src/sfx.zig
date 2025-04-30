@@ -17,9 +17,9 @@ pub const Sfx = struct {
 
     pub fn get_sound_by_id(self: Sfx, sound_id: SoundId) ?ray.Sound {
         return switch (sound_id) {
-            SoundId.startup => self.startup,
-            SoundId.blip => self.blip,
-            SoundId.poweroff => self.poweroff,
+            .startup => self.startup,
+            .blip => self.blip,
+            .poweroff => self.poweroff,
         };
     }
 
