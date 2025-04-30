@@ -3,7 +3,7 @@ const ray = @import("raylib");
 const State = @import("state.zig").State;
 
 // TODO this module should not need these
-const Sfx = @import("sfx.zig").Sfx;
+const Sfx = @import("sfx.zig");
 
 const intvecs = @import("intvecs.zig");
 const IVec2 = intvecs.IVec2;

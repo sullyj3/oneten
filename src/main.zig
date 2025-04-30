@@ -10,7 +10,7 @@ const ray = @import("raylib");
 const input = @import("input.zig");
 const draw = @import("draw.zig");
 const State = @import("state.zig").State;
-const Sfx = @import("sfx.zig").Sfx;
+const Sfx = @import("sfx.zig");
 
 pub fn oneten() !void {
     const sfx: Sfx = Sfx.init();
