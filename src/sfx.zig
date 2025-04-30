@@ -26,10 +26,7 @@ pub fn get_sound_by_id(self: Sfx, sound_id: SoundId) ?ray.Sound {
 }
 
 pub fn play(self: Sfx, sound_id: SoundId) void {
-    const sound = self.get_sound_by_id(sound_id);
-    if (sound) |sound_| {
-        ray.playSound(sound_);
-    }
+    if (self.get_sound_by_id(sound_id)) |sound| ray.playSound(sound);
 }
 
 pub fn is_sound_playing(self: Sfx, sound_id: SoundId) bool {
