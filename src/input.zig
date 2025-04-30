@@ -8,7 +8,7 @@ const Sfx = @import("sfx.zig");
 const intvecs = @import("intvecs.zig");
 const IVec2 = intvecs.IVec2;
 
-pub fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) !void {
+pub fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) error{OutOfMemory}!void {
     state.input_state.tick_ns(dt_ns);
     const input_state = &state.input_state;
 

@@ -73,7 +73,7 @@ pub const State = struct {
 
     alloc: Allocator,
 
-    pub fn init(alloc: Allocator) !State {
+    pub fn init(alloc: Allocator) error{ TimerUnsupported, OutOfMemory }!State {
         var grid: OneTenGrid = try OneTenGrid.init(alloc, 25);
         const row0 = grid.rows.getLast();
         row0[row0.len - 1] = true;

@@ -58,7 +58,7 @@ pub const OneTenGrid = struct {
     alloc: Allocator,
 
     // takes ownership of initial_state, which must have been allocated from `alloc`.
-    pub fn init(alloc: Allocator, n_cells: usize) !OneTenGrid {
+    pub fn init(alloc: Allocator, n_cells: usize) error{OutOfMemory}!OneTenGrid {
         var rows: ArrayListUM([]bool) = try ArrayListUM([]bool).initCapacity(
             alloc,
             32,
@@ -93,7 +93,7 @@ pub const OneTenGrid = struct {
         self.* = try OneTenGrid.init(alloc, n_cells);
     }
 
-    pub fn append_step(self: *OneTenGrid) !void {
+    pub fn append_step(self: *OneTenGrid) error{OutOfMemory}!void {
         const prev: []bool = self.rows.getLast();
         const next: []bool = try sim_step_110(self.alloc, prev);
         try self.rows.append(self.alloc, next);
