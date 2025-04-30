@@ -12,14 +12,10 @@ pub const SoundId = enum {
     plip,
 };
 
-startup: ?ray.Sound,
-blip: ?ray.Sound,
-poweroff: ?ray.Sound,
-plip: ?ray.Sound,
-
-fn maybe_load_sound(path: [:0]const u8) ?ray.Sound {
-    return ray.loadSound(path) catch null;
-}
+startup: ray.Sound,
+blip: ray.Sound,
+poweroff: ray.Sound,
+plip: ray.Sound,
 
 pub fn get_sound_by_id(self: Sfx, sound_id: SoundId) ?ray.Sound {
     return switch (sound_id) {
@@ -64,10 +60,10 @@ pub fn init(exe_path: []const u8) !Sfx {
     const poweroff_path = try std.fs.path.joinZ(alloc, &.{ res_path_abs, "poweroff.wav" });
     const plip_path = try std.fs.path.joinZ(alloc, &.{ res_path_abs, "plip.wav" });
 
-    const startup = maybe_load_sound(startup_path);
-    const blip = maybe_load_sound(blip_path);
-    const poweroff = maybe_load_sound(poweroff_path);
-    const plip = maybe_load_sound(plip_path);
+    const startup = try ray.loadSound(startup_path);
+    const blip = try ray.loadSound(blip_path);
+    const poweroff = try ray.loadSound(poweroff_path);
+    const plip = try ray.loadSound(plip_path);
 
     return Sfx{
         .startup = startup,
@@ -78,8 +74,9 @@ pub fn init(exe_path: []const u8) !Sfx {
 }
 
 pub fn deinit(self: *const Sfx) void {
-    if (self.startup) |s| ray.unloadSound(s);
-    if (self.blip) |s| ray.unloadSound(s);
-    if (self.poweroff) |s| ray.unloadSound(s);
+    ray.unloadSound(self.startup);
+    ray.unloadSound(self.blip);
+    ray.unloadSound(self.poweroff);
+    ray.unloadSound(self.plip);
     ray.closeAudioDevice();
 }
