@@ -7,11 +7,13 @@ pub const SoundId = enum {
     startup,
     blip,
     poweroff,
+    plip,
 };
 
 startup: ?ray.Sound,
 blip: ?ray.Sound,
 poweroff: ?ray.Sound,
+plip: ?ray.Sound,
 
 fn maybe_load_sound(path: [:0]const u8) ?ray.Sound {
     return ray.loadSound(path) catch null;
@@ -22,6 +24,7 @@ pub fn get_sound_by_id(self: Sfx, sound_id: SoundId) ?ray.Sound {
         .startup => self.startup,
         .blip => self.blip,
         .poweroff => self.poweroff,
+        .plip => self.plip,
     };
 }
 
@@ -48,10 +51,13 @@ pub fn init() Sfx {
     const startup = maybe_load_sound("res/startup.wav");
     const blip = maybe_load_sound("res/blip.wav");
     const poweroff = maybe_load_sound("res/poweroff.wav");
+    const plip = maybe_load_sound("res/plip.wav");
+
     return Sfx{
         .startup = startup,
         .blip = blip,
         .poweroff = poweroff,
+        .plip = plip,
     };
 }
 

@@ -42,28 +42,28 @@ pub fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) !void {
     {
         input_state.move_left_timeout.reset();
         state.grid.move_selection(IVec2{ .x = -1, .y = 0 });
-        sfx.play(.blip);
+        sfx.play(.plip);
     }
     if ((ray.isKeyDown(Key.right) or ray.isKeyDown(Key.l)) and
         input_state.move_right_timeout.elapsed)
     {
         input_state.move_right_timeout.reset();
         state.grid.move_selection(IVec2{ .x = 1, .y = 0 });
-        sfx.play(.blip);
+        sfx.play(.plip);
     }
     if ((ray.isKeyDown(Key.up) or ray.isKeyDown(Key.k)) and
         input_state.move_up_timeout.elapsed)
     {
         input_state.move_up_timeout.reset();
         state.grid.move_selection(IVec2{ .x = 0, .y = -1 });
-        sfx.play(.blip);
+        sfx.play(.plip);
     }
     if ((ray.isKeyDown(Key.down) or ray.isKeyDown(Key.j)) and
         input_state.move_down_timeout.elapsed)
     {
         input_state.move_down_timeout.reset();
         state.grid.move_selection(IVec2{ .x = 0, .y = 1 });
-        sfx.play(.blip);
+        sfx.play(.plip);
     }
 
     if (ray.isKeyPressed(Key.q)) {
