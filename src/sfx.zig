@@ -12,6 +12,8 @@ pub const SoundId = enum {
     plip,
 };
 
+// TODO refactor so that we no longer enumerate these manually. this can result in leaks, forgetting
+// etc
 startup: ray.Sound,
 blip: ray.Sound,
 poweroff: ray.Sound,
@@ -53,6 +55,8 @@ pub fn init(exe_path: []const u8) !Sfx {
     // TODO possibly the res folder should get copied to zig-out?
     // maybe the sounds should be included in the binary? need to research the best approach
     const res_path_rel = "../../res";
+    // TODO currently we can't reset the fba for every path because it'll overwrite the res path
+    // revisit once we've precalculated the res path and stored it in AppCtx
     const res_path_abs = try std.fs.path.joinZ(alloc, &.{ exe_path, res_path_rel });
 
     const startup_path = try std.fs.path.joinZ(alloc, &.{ res_path_abs, "startup.wav" });

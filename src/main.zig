@@ -12,8 +12,10 @@ const Sfx = @import("sfx.zig");
 
 const AppCtx = struct {
     const MAX_EXE_DIR_PATH_LEN = 256;
+    // TODO this is dumb, we should just heap allocate strings, it's fine
     exe_dir_buf: [MAX_EXE_DIR_PATH_LEN]u8 = undefined,
     exe_dir: []const u8,
+    // TODO calculate and store res folder path here
     sfx: Sfx,
 
     fn init() !AppCtx {
