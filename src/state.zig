@@ -69,6 +69,8 @@ const DeltaTimer = struct {
     }
 };
 
+// TODO: design: it feels weird for this to be here instead of in input.zig,
+// but if it was there it would be a circular dependency, since we keep an InputState in State
 const InputState = struct {
     // TODO make this start slow and speed up while held
     const move_timeout_ms = 80;
