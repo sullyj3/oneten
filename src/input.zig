@@ -55,10 +55,10 @@ const ActionStates = struct {
     fn update_action_states(self: *ActionStates) void {
         inline for (std.meta.fields(Action)) |field| {
             const action: Action = @enumFromInt(field.value);
-            const keys = bindings.get(action);
+            const keys = comptime bindings.get(action);
             var new_state: ActionState = .{};
 
-            for (keys) |key| {
+            inline for (keys) |key| {
                 new_state.pressed = new_state.pressed or ray.isKeyPressed(key);
                 new_state.down = new_state.down or ray.isKeyDown(key);
                 new_state.released = new_state.released or ray.isKeyReleased(key);
