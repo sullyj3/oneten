@@ -52,7 +52,7 @@ const ActionStates = struct {
     action_states: EnumArray(Action, ActionState) =
         EnumArray(Action, ActionState).initFill(.{}),
 
-    fn update_action_states(self: *ActionStates) void {
+    fn update(self: *ActionStates) void {
         inline for (std.meta.fields(Action)) |field| {
             const action: Action = @enumFromInt(field.value);
             const keys = comptime bindings.get(action);
@@ -83,6 +83,15 @@ const ActionStates = struct {
 
 pub const Cardinal = enum { up, down, left, right };
 
+fn unit_cell_offset(dir: Cardinal) IVec2 {
+    return switch (dir) {
+        .up => .{ .x = 0, .y = -1 },
+        .down => .{ .x = 0, .y = 1 },
+        .left => .{ .x = -1, .y = 0 },
+        .right => .{ .x = 1, .y = 0 },
+    };
+}
+
 fn maybe_move(
     dir: Cardinal,
     grid: *OneTenGrid,
@@ -90,23 +99,17 @@ fn maybe_move(
     timeout: *CountdownTimer,
 ) void {
     if (!timeout.elapsed) return;
-    timeout.reset();
 
+    timeout.reset();
     sfx.play(.plip);
-    const offset = switch (dir) {
-        .up => IVec2{ .x = 0, .y = -1 },
-        .down => IVec2{ .x = 0, .y = 1 },
-        .left => IVec2{ .x = -1, .y = 0 },
-        .right => IVec2{ .x = 1, .y = 0 },
-    };
-    grid.move_selection(offset);
+    grid.move_selection(unit_cell_offset(dir));
 }
 
 pub fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) error{OutOfMemory}!void {
     state.input_state.tick_ns(dt_ns);
     const input_state = &state.input_state;
     const action_states: *ActionStates = &input_state.action_states;
-    action_states.update_action_states();
+    action_states.update();
 
     if (action_states.pressed(.toggle)) {
         sfx.play(.blip);
