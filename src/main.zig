@@ -10,33 +10,41 @@ const draw = @import("draw.zig");
 const State = @import("state.zig").State;
 const Sfx = @import("sfx.zig");
 
+const Allocator = std.mem.Allocator;
+
 const AppCtx = struct {
     const MAX_EXE_DIR_PATH_LEN = 256;
-    // TODO this is dumb, we should just heap allocate strings, it's fine
-    exe_dir_buf: [MAX_EXE_DIR_PATH_LEN]u8 = undefined,
     exe_dir: []const u8,
     // TODO calculate and store res folder path here
     sfx: Sfx,
 
-    fn init() !AppCtx {
-        var ctx: AppCtx = undefined;
-        ctx.exe_dir = try std.fs.selfExeDirPath(&ctx.exe_dir_buf);
-        std.debug.print("exe_dir: {s}\n", .{ctx.exe_dir});
-        ctx.sfx = try Sfx.init(ctx.exe_dir);
+    alloc: Allocator,
 
-        return ctx;
+    fn init(alloc: Allocator) !AppCtx {
+        const exe_dir = try std.fs.selfExeDirPathAlloc(alloc);
+        const sfx = try Sfx.init(exe_dir);
+
+        return .{
+            .exe_dir = exe_dir,
+            .sfx = sfx,
+            .alloc = alloc,
+        };
     }
 
     fn deinit(self: *AppCtx) void {
+        self.alloc.free(self.exe_dir);
         self.sfx.deinit();
     }
 };
 
 pub fn oneten() !void {
-    var ctx: AppCtx = try AppCtx.init();
-    defer ctx.deinit();
-    ctx.sfx.play(.startup);
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const alloc = gpa.allocator();
 
+    var ctx: AppCtx = try AppCtx.init(alloc);
+    defer ctx.deinit();
+
+    ctx.sfx.play(.startup);
     {
         ray.setConfigFlags(.{
             .window_undecorated = true,
@@ -47,9 +55,6 @@ pub fn oneten() !void {
         defer ray.closeWindow();
 
         ray.setTargetFPS(60);
-
-        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-        const alloc = gpa.allocator();
 
         var state = try State.init(alloc);
         defer state.deinit();
