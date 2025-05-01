@@ -1,29 +1,9 @@
 const std = @import("std");
 
-const CountdownTimer = @import("countdown.zig");
-
 const OneTenGrid = @import("grid.zig").OneTenGrid;
+const InputState = @import("input.zig").InputState;
 
 const Allocator = std.mem.Allocator;
-
-// TODO: design: it feels weird for this to be here instead of in input.zig,
-// but if it was there it would be a circular dependency, since we keep an InputState in State
-const InputState = struct {
-    // TODO make this start slow and speed up while held
-    const move_timeout_ms = 80;
-
-    move_left_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
-    move_right_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
-    move_up_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
-    move_down_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
-
-    pub fn tick_ns(self: *InputState, dt_ns: i128) void {
-        self.move_left_timeout.tick_ns(dt_ns);
-        self.move_right_timeout.tick_ns(dt_ns);
-        self.move_up_timeout.tick_ns(dt_ns);
-        self.move_down_timeout.tick_ns(dt_ns);
-    }
-};
 
 pub const State = struct {
     grid: OneTenGrid,

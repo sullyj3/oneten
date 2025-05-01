@@ -1,6 +1,7 @@
 const ray = @import("raylib");
 
 const State = @import("state.zig").State;
+const CountdownTimer = @import("countdown.zig");
 
 // TODO this module should not need these
 const Sfx = @import("sfx.zig");
@@ -70,3 +71,20 @@ pub fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) error{OutOfMemory}!voi
         state.quit = true;
     }
 }
+
+pub const InputState = struct {
+    // TODO make this start slow and speed up while held
+    const move_timeout_ms = 80;
+
+    move_left_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
+    move_right_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
+    move_up_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
+    move_down_timeout: CountdownTimer = CountdownTimer.new_elapsed_ms(move_timeout_ms),
+
+    pub fn tick_ns(self: *InputState, dt_ns: i128) void {
+        self.move_left_timeout.tick_ns(dt_ns);
+        self.move_right_timeout.tick_ns(dt_ns);
+        self.move_up_timeout.tick_ns(dt_ns);
+        self.move_down_timeout.tick_ns(dt_ns);
+    }
+};
