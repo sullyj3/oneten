@@ -27,26 +27,26 @@ const Action = enum {
     quit,
 };
 
-const ActionState = struct {
-    pressed: bool = false,
-    down: bool = false,
-    released: bool = false,
-};
-
 const Bindings = EnumArray(Action, []const Key);
 const bindings: Bindings = Bindings.init(.{
     .toggle = &.{.space},
-    .step_simulation = &.{ .enter, .o },
-    .delete_last_row = &.{ .backspace, .d },
-    .reset = &.{.r},
 
     .move_left = &.{ .left, .h },
     .move_right = &.{ .right, .l },
     .move_up = &.{ .up, .k },
     .move_down = &.{ .down, .j },
 
+    .step_simulation = &.{ .enter, .o },
+    .delete_last_row = &.{ .backspace, .d },
+    .reset = &.{.r},
     .quit = &.{.q},
 });
+
+const ActionState = struct {
+    pressed: bool = false,
+    down: bool = false,
+    released: bool = false,
+};
 
 const ActionStates = struct {
     action_states: EnumArray(Action, ActionState) =
