@@ -2,6 +2,7 @@ const std = @import("std");
 const ray = @import("raylib");
 
 const State = @import("state.zig").State;
+const OneTenGrid = @import("grid.zig").OneTenGrid;
 const CountdownTimer = @import("countdown.zig");
 
 // TODO this module should not need these
@@ -80,6 +81,27 @@ const ActionStates = struct {
     }
 };
 
+pub const Cardinal = enum { up, down, left, right };
+
+fn maybe_move(
+    dir: Cardinal,
+    grid: *OneTenGrid,
+    sfx: Sfx,
+    timeout: *CountdownTimer,
+) void {
+    if (!timeout.elapsed) return;
+    timeout.reset();
+
+    sfx.play(.plip);
+    const offset = switch (dir) {
+        .up => IVec2{ .x = 0, .y = -1 },
+        .down => IVec2{ .x = 0, .y = 1 },
+        .left => IVec2{ .x = -1, .y = 0 },
+        .right => IVec2{ .x = 1, .y = 0 },
+    };
+    grid.move_selection(offset);
+}
+
 pub fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) error{OutOfMemory}!void {
     state.input_state.tick_ns(dt_ns);
     const input_state = &state.input_state;
@@ -106,34 +128,17 @@ pub fn handle_input(state: *State, sfx: Sfx, dt_ns: i128) error{OutOfMemory}!voi
         try state.grid.reset();
     }
 
-    // TODO abstract this timeout logic
-    if (action_states.down(.move_left) and
-        input_state.move_left_timeout.elapsed)
-    {
-        input_state.move_left_timeout.reset();
-        state.grid.move_selection(IVec2{ .x = -1, .y = 0 });
-        sfx.play(.plip);
+    if (action_states.down(.move_left)) {
+        maybe_move(.left, &state.grid, sfx, &input_state.move_left_timeout);
     }
-    if (action_states.down(.move_right) and
-        input_state.move_right_timeout.elapsed)
-    {
-        input_state.move_right_timeout.reset();
-        state.grid.move_selection(IVec2{ .x = 1, .y = 0 });
-        sfx.play(.plip);
+    if (action_states.down(.move_right)) {
+        maybe_move(.right, &state.grid, sfx, &input_state.move_right_timeout);
     }
-    if (action_states.down(.move_up) and
-        input_state.move_up_timeout.elapsed)
-    {
-        input_state.move_up_timeout.reset();
-        state.grid.move_selection(IVec2{ .x = 0, .y = -1 });
-        sfx.play(.plip);
+    if (action_states.down(.move_up)) {
+        maybe_move(.up, &state.grid, sfx, &input_state.move_up_timeout);
     }
-    if (action_states.down(.move_down) and
-        input_state.move_down_timeout.elapsed)
-    {
-        input_state.move_down_timeout.reset();
-        state.grid.move_selection(IVec2{ .x = 0, .y = 1 });
-        sfx.play(.plip);
+    if (action_states.down(.move_down)) {
+        maybe_move(.down, &state.grid, sfx, &input_state.move_down_timeout);
     }
 
     state.quit = action_states.pressed(.quit);
