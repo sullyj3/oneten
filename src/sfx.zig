@@ -12,31 +12,14 @@ pub const SoundId = enum {
     plip,
 };
 
-// TODO refactor so that we no longer enumerate these manually. this can result in leaks, forgetting
-// etc
-startup: ray.Sound,
-blip: ray.Sound,
-poweroff: ray.Sound,
-plip: ray.Sound,
-
-pub fn get_sound_by_id(self: Sfx, sound_id: SoundId) ?ray.Sound {
-    return switch (sound_id) {
-        .startup => self.startup,
-        .blip => self.blip,
-        .poweroff => self.poweroff,
-        .plip => self.plip,
-    };
-}
+sounds: std.enums.EnumArray(SoundId, ray.Sound),
 
 pub fn play(self: Sfx, sound_id: SoundId) void {
-    if (self.get_sound_by_id(sound_id)) |sound| ray.playSound(sound);
+    ray.playSound(self.sounds.get(sound_id));
 }
 
 pub fn is_sound_playing(self: Sfx, sound_id: SoundId) bool {
-    return if (self.get_sound_by_id(sound_id)) |sound|
-        ray.isSoundPlaying(sound)
-    else
-        false;
+    return ray.isSoundPlaying(self.sounds.get(sound_id));
 }
 
 pub fn sleep_til_finished(self: Sfx, sound_id: SoundId, poll_interval_ms: u64) void {
@@ -64,23 +47,17 @@ pub fn init(exe_path: []const u8) !Sfx {
     const poweroff_path = try std.fs.path.joinZ(alloc, &.{ res_path_abs, "poweroff.wav" });
     const plip_path = try std.fs.path.joinZ(alloc, &.{ res_path_abs, "plip.wav" });
 
-    const startup = try ray.loadSound(startup_path);
-    const blip = try ray.loadSound(blip_path);
-    const poweroff = try ray.loadSound(poweroff_path);
-    const plip = try ray.loadSound(plip_path);
-
     return Sfx{
-        .startup = startup,
-        .blip = blip,
-        .poweroff = poweroff,
-        .plip = plip,
+        .sounds = std.EnumArray(SoundId, ray.Sound).init(.{
+            .startup = try ray.loadSound(startup_path),
+            .blip = try ray.loadSound(blip_path),
+            .poweroff = try ray.loadSound(poweroff_path),
+            .plip = try ray.loadSound(plip_path),
+        }),
     };
 }
 
 pub fn deinit(self: *const Sfx) void {
-    ray.unloadSound(self.startup);
-    ray.unloadSound(self.blip);
-    ray.unloadSound(self.poweroff);
-    ray.unloadSound(self.plip);
+    for (self.sounds.values) |s| ray.unloadSound(s);
     ray.closeAudioDevice();
 }

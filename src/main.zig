@@ -33,7 +33,8 @@ const AppCtx = struct {
 };
 
 pub fn oneten() !void {
-    const ctx: AppCtx = try AppCtx.init();
+    var ctx: AppCtx = try AppCtx.init();
+    defer ctx.deinit();
     ctx.sfx.play(.startup);
 
     {
