@@ -34,29 +34,19 @@ pub fn init(res_dir: []const u8) !Sfx {
     var fba = std.heap.FixedBufferAllocator.init(&buf);
     const fba_alloc = fba.allocator();
 
-    const startup_path = try std.fs.path.joinZ(fba_alloc, &.{ res_dir, "startup.wav" });
-    const startup = try ray.loadSound(startup_path);
-    fba.reset();
-
-    const blip_path = try std.fs.path.joinZ(fba_alloc, &.{ res_dir, "blip.wav" });
-    const blip = try ray.loadSound(blip_path);
-    fba.reset();
-
-    const poweroff_path = try std.fs.path.joinZ(fba_alloc, &.{ res_dir, "poweroff.wav" });
-    const poweroff = try ray.loadSound(poweroff_path);
-    fba.reset();
-
-    const plip_path = try std.fs.path.joinZ(fba_alloc, &.{ res_dir, "plip.wav" });
-    const plip = try ray.loadSound(plip_path);
-    fba.reset();
+    var sounds = std.EnumArray(SoundId, ray.Sound).initUndefined();
+    inline for (std.meta.fields(SoundId)) |field| {
+        const extension = ".wav";
+        const filename_buf = try fba_alloc.alloc(u8, field.name.len + extension.len);
+        const filename = try std.fmt.bufPrint(filename_buf, "{s}{s}", .{ field.name, extension });
+        const filepath = try std.fs.path.joinZ(fba_alloc, &.{ res_dir, filename });
+        const sound = try ray.loadSound(filepath);
+        sounds.set(@enumFromInt(field.value), sound);
+        fba.reset();
+    }
 
     return Sfx{
-        .sounds = std.EnumArray(SoundId, ray.Sound).init(.{
-            .startup = startup,
-            .blip = blip,
-            .poweroff = poweroff,
-            .plip = plip,
-        }),
+        .sounds = sounds,
     };
 }
 
