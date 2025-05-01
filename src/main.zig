@@ -15,17 +15,25 @@ const Allocator = std.mem.Allocator;
 const AppCtx = struct {
     const MAX_EXE_DIR_PATH_LEN = 256;
     exe_dir: []const u8,
-    // TODO calculate and store res folder path here
+    res_dir: []const u8,
     sfx: Sfx,
 
     alloc: Allocator,
 
     fn init(alloc: Allocator) !AppCtx {
         const exe_dir = try std.fs.selfExeDirPathAlloc(alloc);
-        const sfx = try Sfx.init(exe_dir);
+
+        // relative to ./zig-out/bin
+        // TODO possibly the res folder should get copied to zig-out?
+        // maybe the sounds should be included in the binary? need to research the best approach
+        const res_path_rel = "../../res";
+        const res_path_abs = try std.fs.path.join(alloc, &.{ exe_dir, res_path_rel });
+
+        const sfx = try Sfx.init(res_path_abs);
 
         return .{
             .exe_dir = exe_dir,
+            .res_dir = res_path_abs,
             .sfx = sfx,
             .alloc = alloc,
         };
@@ -33,6 +41,7 @@ const AppCtx = struct {
 
     fn deinit(self: *AppCtx) void {
         self.alloc.free(self.exe_dir);
+        self.alloc.free(self.res_dir);
         self.sfx.deinit();
     }
 };
