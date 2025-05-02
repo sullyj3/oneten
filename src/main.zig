@@ -10,6 +10,8 @@ const draw = @import("draw.zig");
 const State = @import("state.zig").State;
 const Sfx = @import("sfx.zig");
 
+const try_clay = @import("try_clay.zig");
+
 const Allocator = std.mem.Allocator;
 
 const AppCtx = struct {
@@ -79,5 +81,6 @@ pub fn oneten() !void {
 }
 
 pub fn main() !void {
-    try oneten();
+    // try oneten();
+    try try_clay.main();
 }

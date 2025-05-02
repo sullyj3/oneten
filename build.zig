@@ -70,12 +70,17 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-
     const raylib = raylib_dep.module("raylib"); // main raylib module
     const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
-
     exe.linkLibrary(raylib_artifact);
     exe.root_module.addImport("raylib", raylib);
+
+    const clay_dep = b.dependency("clay_zig", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.linkLibrary(clay_dep.artifact("clay"));
+    exe.root_module.addImport("clay", clay_dep.module("clay"));
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
