@@ -85,10 +85,10 @@ pub const Cardinal = enum { up, down, left, right };
 
 fn unit_cell_offset(dir: Cardinal) IVec2 {
     return switch (dir) {
-        .up => .{ .x = 0, .y = -1 },
-        .down => .{ .x = 0, .y = 1 },
-        .left => .{ .x = -1, .y = 0 },
-        .right => .{ .x = 1, .y = 0 },
+        .up => .neg_y_unit,
+        .down => .y_unit,
+        .left => .neg_x_unit,
+        .right => .x_unit,
     };
 }
 
