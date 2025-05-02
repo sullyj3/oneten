@@ -21,6 +21,11 @@ pub const IVec2 = struct {
     x: i32 = 0,
     y: i32 = 0,
 
+    pub const y_unit: IVec2 = .{.x=0, .y=1};
+    pub const neg_y_unit: IVec2 = .{.x=0, .y=-1};
+    pub const x_unit: IVec2 = .{.x=1, .y=0};
+    pub const neg_x_unit: IVec2 = .{.x=-1, .y=0};
+
     pub fn mul_pointwise(self: IVec2, other: IVec2) IVec2 {
         return .{ .x = self.x * other.x, .y = self.y * other.y };
     }

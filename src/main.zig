@@ -31,7 +31,7 @@ const AppCtx = struct {
         const res_path_rel = "../../res";
         const res_path_abs = try std.fs.path.join(alloc, &.{ exe_dir, res_path_rel });
 
-        const sfx = try Sfx.init(res_path_abs);
+        const sfx: Sfx = try .init(res_path_abs);
 
         return .{
             .exe_dir = exe_dir,
