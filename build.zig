@@ -66,13 +66,18 @@ pub fn build(b: *std.Build) void {
     });
 
     const raylib_dep = b.dependency("raylib_zig", .{
-        .shared = true,
+        .shared = false,
         .target = target,
         .optimize = optimize,
     });
 
     const raylib = raylib_dep.module("raylib"); // main raylib module
     const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
+
+    // Pull in miniaudio’s system dependencies on Linux:
+    for (&[_][]const u8{ "asound", "pulse", "pthread", "dl", "m" }) |lib| {
+        exe.linkSystemLibrary(lib);
+    }
 
     exe.linkLibrary(raylib_artifact);
     exe.root_module.addImport("raylib", raylib);
